@@ -50,7 +50,6 @@ class Contest(object):
 
         self.call_exists, self.download_ok = self.import_log()
         self.download_spots_ok = self.import_reverse_beacon_spots()
-        self.process()
 
     def __str__(self):
         line = ""
