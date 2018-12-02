@@ -1,19 +1,24 @@
 import logging
-#from urllib.request import urlopen
-from urllib2 import urlopen
+from urllib.request import urlopen
+#from urllib2 import urlopen
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def get_log(contestType, callsign, year, mode):
+def get_log(contest, callsign, year, mode):
     isgood = False
     try:
         response = None
-        if contestType=="cqww":
-            logging.info('Getting the log from http://www.cqww.com/publiclogs/%s%s/%s.log'%(year, mode, callsign.lower()))
-            response = urlopen("http://www.cqww.com/publiclogs/%s%s/%s.log"%(year, mode, callsign.lower()))
-        elif contestType=="cqwpx":
-            logging.info('Getting the log from http://www.cqwpx.com/publiclogs/%s%s/%s.log'%(year, mode, callsign.lower()))
-            response = urlopen("http://www.cqwpx.com/publiclogs/%s%s/%s.log"%(year, mode, callsign.lower()))
-        html = response.read()
+        website_address = ""
+        if contest == "cqww":
+            logging.info('Getting the log from http://www.cqww.com/publiclogs/{}{}/{}.log'.format(year, mode, callsign.lower()))
+            website_address = "http://www.cqww.com/publiclogs/{}{}/{}.log".format(year, mode, callsign.lower())
+        elif contest == "cqwpx":
+            logging.info('Getting the log from http://www.cqwpx.com/publiclogs/{}{}/{}.log'.format(year, mode, callsign.lower()))
+            website_address = "http://www.cqwpx.com/publiclogs/{}{}/{}.log".format(year, mode, callsign.lower())
+
+        with urlopen(website_address) as response:
+            html = response.read()
         isgood = True
         return isgood, html
     except:
