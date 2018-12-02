@@ -26,12 +26,14 @@ def get_log(contest, callsign, year, mode):
 
 
 def get_list_of_logs(contest_type, year, mode):
-    response = None
+    website_address = ""
     if contest_type == "cqww":
-        response = urlopen("http://www.cqww.com/publiclogs/{}{}/".format(year, mode))
+        website_address = "http://www.cqww.com/publiclogs/{}{}/".format(year, mode)
     elif contest_type == "cqwpx":
-        response = urlopen("http://www.cqwpx.com/publiclogs/{}{}/".format(year, mode, ))
-    html = str(response.read())
+        website_address = "http://www.cqwpx.com/publiclogs/{}{}/".format(year, mode, )
+
+    with urlopen(website_address) as response:
+        html = str(response.read().decode('utf-8'))
 
     html = html[html.find("Number of logs found"):]
     calls = []
@@ -46,12 +48,14 @@ def get_list_of_logs(contest_type, year, mode):
 
 def get_list_of_years(contest_type):
     try:
-        response = None
+        website_address = ""
         if contest_type == "cqww":
-            response = urlopen("http://www.cqww.com/publiclogs/")
+            website_address = "http://www.cqww.com/publiclogs/"
         elif contest_type == "cqwpx":
-            response = urlopen("http://www.cqwpx.com/publiclogs/")
-        html = str(response.read())
+            website_address = "http://www.cqwpx.com/publiclogs/"
+
+        with urlopen(website_address) as response:
+            html = response.read().decode('utf-8')
 
         years = []
         for l in html.split("\n"):
