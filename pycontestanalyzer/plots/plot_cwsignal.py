@@ -11,6 +11,7 @@ class PlotCWSignal(PlotBase):
     def do_plot(self, contest, doSave, options=""):
 
         extra_conditions = (contest.rbspots["speed"] > 0.)
+        avg = "5min"
         for opt in options.split(","):
             if "callsign" in opt:
                 callsign = opt.replace("callsign", "")
@@ -18,12 +19,16 @@ class PlotCWSignal(PlotBase):
             if "band" in opt:
                 band = opt.replace("band", "")
                 extra_conditions &= (contest.rbspots["band"] == str("%sm" % band))
+            if "avg" in opt:
+                avg = opt.replace("avg", "")
+
+        contest.rbspots["date_round%s" % avg] = contest.rbspots["date"].dt.round(avg)
 
         # Define the datasets
-        y = contest.rbspots[extra_conditions].groupby("date")["db"].mean()
+        y = contest.rbspots[extra_conditions].groupby("date_round%s" % avg)["db"].mean()
         x = y.index.tolist()
         data = [
-                go.Scatter(x=x, y=y, line=dict(color='blue',   width=4), hoverinfo="x+y", mode="lines", name="CW speed"),
+                go.Scatter(x=x, y=y, hoverinfo="x+y", mode="lines", name="CW speed"),
                 ]
 
         title = 'Signal strength vs date'
