@@ -119,7 +119,7 @@ class Contest(object):
             csvfile.write("frequency,mode,date,time,mycall,urrst,urnr,call,myrst,mynr,stn\n")
 
             # Loop on lines info line by line to create data frame
-            infile = open("{}/{}".format(self.log_path, self.log_name))
+            infile = open("{}/{}".format(self.log_path, self.log_name), encoding='utf-8')
             lines = infile.readlines()
             for l in lines:
                 line = l.split(":")[1].replace('\n', '')
@@ -199,7 +199,7 @@ class Contest(object):
         return True
 
     def read_contest_general_info(self):
-        infile = open("{}/{}".format(self.log_path, self.log_name))
+        infile = open("{}/{}".format(self.log_path, self.log_name), encoding='utf-8')
         infile.seek(0)
         lines = infile.readlines()
         for l in lines:
