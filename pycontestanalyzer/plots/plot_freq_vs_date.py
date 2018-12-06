@@ -11,14 +11,14 @@ class PlotFreqVsDate(PlotBase):
     def do_plot(self, contest, doSave, options=""):
 
         binning = {}
-        if contest.mode=="CW":
+        if contest.mode=="cw":
             binning[10] = list(range(28000, 28160, 40))
             binning[15] = list(range(21000, 21160, 40))
             binning[20] = list(range(14000, 14160, 40))
             binning[40] = list(range(7000, 7100, 25))
             binning[80] = list(range(3500, 3600, 25))
             binning[160] = list(range(1800, 1880, 20))
-        if contest.mode=="SSB":
+        if contest.mode=="ph":
             binning[10] = list(range(28150, 28950, 200))
             binning[15] = list(range(21150, 21450, 75))
             binning[20] = list(range(14150, 14450, 75))
