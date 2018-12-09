@@ -58,10 +58,10 @@ class PlotDbVsDate(PlotBase):
         data = []
         for b in [10, 15, 20, 40, 80, 160]:
             if band is None:
-                data.append(go.Scatter(x=x[b] , y=y[b] , line=dict(color=(colors[b]),   width=3), hoverinfo="x+y", mode="lines", name="%dm"%b))
+                data.append(go.Scatter(x=x[b] , y=y[b] , line=dict(color=(colors[b]),   width=1), hoverinfo="x+y", mode="lines", name="%dm"%b))
             else:
                 if str("%dm"%b)==band:
-                    data.append(go.Scatter(x=x[b] , y=y[b] , line=dict(color=(colors[b]),   width=3), hoverinfo="x+y", mode="line", name="%dm"%b))
+                    data.append(go.Scatter(x=x[b] , y=y[b] , line=dict(color=(colors[b]),   width=1), hoverinfo="x+y", mode="line", name="%dm"%b))
 
         layout = go.Layout(
             barmode='stack',

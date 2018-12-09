@@ -26,7 +26,7 @@ class PlotCWSpeed(PlotBase):
         y = contest.rbspots[extra_conditions].groupby("date_round%s"%avg)["speed"].mean()
         x = y.index.tolist()
         data = [
-                go.Scatter(x=x , y=y , line=dict(color='blue',   width=4), hoverinfo="x+y", mode="lines", name="CW speed"),
+                go.Scatter(x=x , y=y , line=dict(color='blue',   width=1), hoverinfo="x+y", mode="lines", name="CW speed"),
                 ]
 
         title = 'TX speed vs date'

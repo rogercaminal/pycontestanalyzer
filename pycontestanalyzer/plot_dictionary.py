@@ -11,7 +11,6 @@ from pycontestanalyzer.plots.plot_lenghtcallmorse import PlotLenghtCallMorse
 from pycontestanalyzer.plots.plot_heading import PlotHeading
 from pycontestanalyzer.plots.plot_db_vs_date import PlotDbVsDate
 from pycontestanalyzer.plots.plot_cwspeed import PlotCWSpeed
-from pycontestanalyzer.plots.plot_cwsignal import PlotCWSignal
 
 plot_dictionary = PlotManager()
 
@@ -27,4 +26,3 @@ plot_dictionary.add_plot("plot_lenghtcallmorse", PlotLenghtCallMorse("plot_lengh
 plot_dictionary.add_plot("plot_heading", PlotHeading("plot_heading"))
 plot_dictionary.add_plot("plot_db_vs_date", PlotDbVsDate("plot_db_vs_date"))
 plot_dictionary.add_plot("plot_cwspeed", PlotCWSpeed("plot_cwspeed"))
-plot_dictionary.add_plot("plot_cwsignal", PlotCWSignal("plot_cwsignal"))

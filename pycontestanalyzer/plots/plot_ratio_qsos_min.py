@@ -29,7 +29,7 @@ class PlotRatioQSOsMin(PlotBase):
         layout = go.Layout(
             barmode='stack',
             title='QSOs per min',
-            xaxis=dict(title="QSOs/min", tickvals=range(1, 15)),
+            xaxis=dict(title="QSOs/min", tickvals=list(range(1, 15))),
             yaxis=dict(title="Number of times"),
             width=750,
             height=750,
