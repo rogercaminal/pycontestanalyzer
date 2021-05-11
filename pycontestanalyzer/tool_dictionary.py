@@ -16,7 +16,13 @@ tool_dictionary.add_tool("tool_datetime", ToolDatetime("tool_datetime"))
 tool_dictionary.add_tool("tool_maxrates", ToolMaxRates("tool_maxrates"))
 tool_dictionary.add_tool("tool_hour", ToolHour("tool_hour"))
 tool_dictionary.add_tool("tool_band", ToolBand("tool_band"))
-tool_dictionary.add_tool("tool_station_type", ToolStationType("tool_station_type"))
+tool_dictionary.add_tool(
+    "tool_station_type", ToolStationType("tool_station_type")
+)
 tool_dictionary.add_tool("tool_getdxcc", ToolGetDXCC("tool_getdxcc"))
-tool_dictionary.add_tool("tool_contest_evolution", ToolContestEvolution("tool_contest_evolution"))
-tool_dictionary.add_tool("tool_lenghtcallmorse", ToolLenghtCallMorse("tool_lenghtcallmorse"))
+tool_dictionary.add_tool(
+    "tool_contest_evolution", ToolContestEvolution("tool_contest_evolution")
+)
+tool_dictionary.add_tool(
+    "tool_lenghtcallmorse", ToolLenghtCallMorse("tool_lenghtcallmorse")
+)
