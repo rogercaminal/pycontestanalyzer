@@ -2,3 +2,4 @@
 .idea/
 pycontestanalyzer.egg-info/
 .python-version
+.env
