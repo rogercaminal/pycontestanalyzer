@@ -7,6 +7,7 @@ from pycontestanalyzer.config.base import BaseSettings
 from pycontestanalyzer.config.download import DownloadSettings
 from pycontestanalyzer.config.logging import LoggingSettings
 from pycontestanalyzer.config.info import SettingsInfo
+from pycontestanalyzer.config.storage import StorageSettings
 
 
 def _make_lowercase(_: Any, values: Dict[str, Any]) -> Dict[str, Any]:
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
     download: DownloadSettings
     info: SettingsInfo
     logging: LoggingSettings
+    storage: StorageSettings
     
     # DynaConf top-level keys are set to UPPERCASE so we need to transform them
     # before creating the Settings model.

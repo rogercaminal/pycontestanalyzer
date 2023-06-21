@@ -13,6 +13,7 @@ SETTINGS_FILES = [
     SETTINGS_DIR / "download.yaml",
     SETTINGS_DIR / "info.yaml",
     SETTINGS_DIR / "logging.yaml",
+    SETTINGS_DIR / "storage.yaml",
 ]
 
 

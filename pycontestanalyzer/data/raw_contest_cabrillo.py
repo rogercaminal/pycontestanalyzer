@@ -10,11 +10,10 @@ from pycontestanalyzer.data.storage_source import StorageDataSource
 
 import re
 from urllib.request import urlopen
-import pandas as pd
 from io import StringIO
 
 
-class OnlineContestCabrilloDataSource(StorageDataSource):
+class RawContestCabrilloDataSource(StorageDataSource):
     """Contest cabrillo data source definition."""
 
     file_format: ClassVar[str] = "csv"
@@ -29,7 +28,7 @@ class OnlineContestCabrilloDataSource(StorageDataSource):
         year: int,
         mode: str,
     ):
-        """Online contest cabrillo data source constructor.
+        """Raw contest cabrillo data source constructor.
 
         The constructor can be provided with optional values to filter loaded data, such
         as geographic granularity and prediciton model (name), either a single value or

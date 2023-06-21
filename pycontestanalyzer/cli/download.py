@@ -2,7 +2,7 @@
 from logging import getLogger
 from typer import Option, Typer
 
-from pycontestanalyzer.download.main import main as _main
+from pycontestanalyzer.modules.download.main import main as _main
 
 app = Typer(name="download", add_completion=False)
 logger = getLogger(__name__)

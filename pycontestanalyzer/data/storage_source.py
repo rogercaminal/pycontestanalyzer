@@ -4,7 +4,7 @@ from abc import ABC
 from os import PathLike
 from typing import Any, Callable, ClassVar, List, Mapping, Optional, Union
 
-from pandas import DataFrame, read_csv
+from pandas import DataFrame, read_csv, read_parquet
 
 from pycontestanalyzer.data.data_source import DataSource
 
@@ -41,6 +41,7 @@ class StorageDataSource(DataSource, ABC):
     supported_file_formats: ClassVar[List[str]] = ["csv", "parquet", "pickle"]
     read_method_by_file_format: ClassVar[Mapping[str, Callable[..., DataFrame]]] = {
         "csv": read_csv,
+        "parquet": read_parquet,
     }
 
     def __init__(self, prefix: Optional[str] = None) -> None:
