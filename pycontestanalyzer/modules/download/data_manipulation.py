@@ -1,6 +1,6 @@
-"""PyContestAnalyzer data manipulation module"""
-import numpy as np
-import logging 
+"""PyContestAnalyzer data manipulation module."""
+import logging
+
 from pandas import DataFrame
 
 from pycontestanalyzer.commons.pandas.dataframes import (
@@ -9,12 +9,11 @@ from pycontestanalyzer.commons.pandas.dataframes import (
     hour_of_contest,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
 def data_manipulation(data: DataFrame) -> DataFrame:
-    """Run the data manipulation
+    """Run the data manipulation.
 
     Args:
         data (DataFrame): Raw contest data set.
@@ -25,8 +24,7 @@ def data_manipulation(data: DataFrame) -> DataFrame:
     logger.info("Start of the feature engineering")
 
     _data = (
-        data
-        .pipe(
+        data.pipe(
             func=compute_band,
         )
         .pipe(
@@ -36,5 +34,5 @@ def data_manipulation(data: DataFrame) -> DataFrame:
             func=hour_of_contest,
         )
     )
-    
+
     return _data

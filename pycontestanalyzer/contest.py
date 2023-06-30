@@ -1,17 +1,17 @@
 import logging
 import os
-import numpy as np
-import pandas as pd
-import zipfile
 import pickle
 import ssl
 import time
-
-from urllib.request import urlopen
+import zipfile
 from io import StringIO
+from urllib.request import urlopen
 
-from pycontestanalyzer.utils.downloads.logs import get_log
+import numpy as np
+import pandas as pd
+
 from pycontestanalyzer.tool_dictionary import tool_dictionary
+from pycontestanalyzer.utils.downloads.logs import get_log
 
 ssl._create_default_https_context = ssl._create_unverified_context
 logging.basicConfig(level=logging.DEBUG)
@@ -63,14 +63,13 @@ class Contest(object):
         line += "Category transmitter: %s\n" % self.cat_transmitter
         line += "Operator names: %s\n" % self.operator_names
         line += "Location: %s\n" % self.location
-        line += "Operator(s) call(s): %s\n" % (' '.join(self.operators))
+        line += "Operator(s) call(s): %s\n" % (" ".join(self.operators))
         line += "Club: %s\n" % self.club
-        return line 
+        return line
 
     def import_log(self):
-        """
-        Imports the log from the official webpage and transforms it to a dataframe.
-        :return: (Boolean, Boolean), indicating whether the call exists, and whether it has been downloaded correctly
+        """Imports the log from the official webpage and transforms it to a dataframe.
+        :return: (Boolean, Boolean), indicating whether the call exists, and whether it has been downloaded correctly.
         """
         # def import_log(contest, contestType, year, mode, callsign, forceCSV=False):
         # --- Type of initial variables
@@ -87,17 +86,27 @@ class Contest(object):
         dict_types["mynr"] = np.int64
         dict_types["ismult"] = np.int64
 
-        self.log_path = "{output_folder}/{contest_type}_{year}_{mode}_{callsign}/".format(
-            output_folder=self.output_folder, contest_type=self.contest, year=self.year,
-            mode=self.mode, callsign=self.callsign)
+        self.log_path = (
+            "{output_folder}/{contest_type}_{year}_{mode}_{callsign}/".format(
+                output_folder=self.output_folder,
+                contest_type=self.contest,
+                year=self.year,
+                mode=self.mode,
+                callsign=self.callsign,
+            )
+        )
         self.log_name = "log_{contest_type}_{year}_{mode}_{callsign}.log".format(
-            output_folder=self.output_folder,
-            contest_type=self.contest, year=self.year,
-            mode=self.mode, callsign=self.callsign)
+            contest_type=self.contest,
+            year=self.year,
+            mode=self.mode,
+            callsign=self.callsign,
+        )
 
         logging.info("Importing contest object")
         # Check if formatted pickle file exists and used unless otherwise specified
-        if not os.path.exists("{}/{}".format(self.log_path, self.log_name.replace(".log", ".pickle"))):
+        if not os.path.exists(
+            "{}/{}".format(self.log_path, self.log_name.replace(".log", ".pickle"))
+        ):
             logging.info("Checking folders and creating them")
 
             # Check if logfiles folder exists and create if not
@@ -105,7 +114,9 @@ class Contest(object):
                 os.makedirs(self.log_path)
 
             # Download log file from web
-            isgood, downloadedlog = get_log(self.contest, self.callsign, self.year, self.mode)
+            isgood, downloadedlog = get_log(
+                self.contest, self.callsign, self.year, self.mode
+            )
             if not isgood:
                 return isgood, False
 
@@ -115,24 +126,38 @@ class Contest(object):
 
             logging.info("Creating Pandas object")
             # Create csv file header
-            csvfile = open("{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv")), "w")
-            csvfile.write("frequency,mode,date,time,mycall,urrst,urnr,call,myrst,mynr,stn\n")
+            csvfile = open(
+                "{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv")),
+                "w",
+            )
+            csvfile.write(
+                "frequency,mode,date,time,mycall,urrst,urnr,call,myrst,mynr,stn\n"
+            )
 
             # Loop on lines info line by line to create data frame
-            infile = open("{}/{}".format(self.log_path, self.log_name), encoding='utf-8', errors="ignore")
+            infile = open(
+                "{}/{}".format(self.log_path, self.log_name),
+                encoding="utf-8",
+                errors="ignore",
+            )
             lines = infile.readlines()
             for l in lines:
-                line = l.split(":")[1].replace('\n', '')
+                line = l.split(":")[1].replace("\n", "")
                 line = line[1:]
                 if "QSO" in l:
                     if len(line.split()) == 10:
                         line += ",0"
-                    line = ','.join(line.split()) + "\n"
+                    line = ",".join(line.split()) + "\n"
                     csvfile.write(line)
             csvfile.close()
             infile.close()
-            self.log = pd.read_csv("{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv")), dtype=dict_types)
-            os.remove("{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv")))
+            self.log = pd.read_csv(
+                "{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv")),
+                dtype=dict_types,
+            )
+            os.remove(
+                "{}/{}".format(self.log_path, self.log_name.replace(".log", ".csv"))
+            )
 
             # Read contest information for original log file
             self.read_contest_general_info()
@@ -144,16 +169,16 @@ class Contest(object):
         return True, False
 
     def import_reverse_beacon_spots(self, tmp_dir="/tmp/"):
-        """
-        Downloads the reverse beacon spots for the days of the contest and adds it to a dataframe in contest.
+        """Downloads the reverse beacon spots for the days of the contest and adds it to a dataframe in contest.
         :param tmp_dir: Folder where to temporary download the zip file with the spots
         :return: Boolean, indicating whether the download succeeded.
         """
         logging.info("Getting reverse beacon spots")
 
         # --- Check if formatted pickle file exists and used unless otherwise specified
-        if not os.path.exists("{}/{}.pickle".format(self.log_path, self.log_name.replace(".log", ""))):
-
+        if not os.path.exists(
+            "{}/{}.pickle".format(self.log_path, self.log_name.replace(".log", ""))
+        ):
             spots_list = []
             contest_dates = self.log["date"].unique()
             contest_dates.sort()
@@ -161,49 +186,66 @@ class Contest(object):
             for d in contest_dates:
                 date = d.replace("-", "")
                 try:
-                    website_address = "http://reversebeacon.net/raw_data/dl.php?f={}".format(date)
+                    website_address = (
+                        "http://reversebeacon.net/raw_data/dl.php?f={}".format(date)
+                    )
                     with urlopen(website_address) as response:
                         html = response.read()
-                        f = open("{}/spots_{}".format(tmp_dir, self.log_name.replace(".log", ".zip")), "wb")
+                        f = open(
+                            "{}/spots_{}".format(
+                                tmp_dir, self.log_name.replace(".log", ".zip")
+                            ),
+                            "wb",
+                        )
                         f.write(html)
                         f.close()
                 except:
                     logging.error("Problem getting reverse beacon spots")
                     return False
-                myzipfile = zipfile.ZipFile("{}/spots_{}".format(tmp_dir, self.log_name.replace(".log", ".zip")))
+                myzipfile = zipfile.ZipFile(
+                    "{}/spots_{}".format(tmp_dir, self.log_name.replace(".log", ".zip"))
+                )
                 csvfile = [myzipfile.read(name) for name in myzipfile.namelist()]
-                sp = pd.read_csv(StringIO(csvfile[0].decode('utf-8')),
-                                 keep_default_na=False,
-                                 dtype={"callsign": np.object,
-                                        "de_pfx": np.object,
-                                        "de_cont": np.object,
-                                        "freq": np.object,
-                                        "band": np.object,
-                                        "dx": np.object,
-                                        "dx_pfx": np.object,
-                                        "dx_cont": np.object,
-                                        "mode": np.object,
-                                        # "db": np.int64,
-                                        # "speed": np.int64,
-                                        # "tx_mode": np.objec
-                                        }
-                                 )
+                sp = pd.read_csv(
+                    StringIO(csvfile[0].decode("utf-8")),
+                    keep_default_na=False,
+                    dtype={
+                        "callsign": np.object,
+                        "de_pfx": np.object,
+                        "de_cont": np.object,
+                        "freq": np.object,
+                        "band": np.object,
+                        "dx": np.object,
+                        "dx_pfx": np.object,
+                        "dx_cont": np.object,
+                        "mode": np.object,
+                        # "db": np.int64,
+                        # "speed": np.int64,
+                        # "tx_mode": np.objec
+                    },
+                )
                 sp["date"] = pd.to_datetime(sp["date"])
                 sp["freq"] = pd.to_numeric(sp["freq"])
                 sp["speed"] = pd.to_numeric(sp["speed"])
                 sp["db"] = pd.to_numeric(sp["db"])
                 spots_list.append(sp[sp["dx"] == self.callsign])
             self.rbspots = pd.concat(spots_list)
-            os.remove("{}/spots_{}".format(tmp_dir, self.log_name.replace(".log", ".zip")))
+            os.remove(
+                "{}/spots_{}".format(tmp_dir, self.log_name.replace(".log", ".zip"))
+            )
             return True
         return True
 
     def read_contest_general_info(self):
-        infile = open("{}/{}".format(self.log_path, self.log_name), encoding='utf-8', errors="ignore")
+        infile = open(
+            "{}/{}".format(self.log_path, self.log_name),
+            encoding="utf-8",
+            errors="ignore",
+        )
         infile.seek(0)
         lines = infile.readlines()
         for l in lines:
-            line = l.split(":")[1].replace('\n', '')
+            line = l.split(":")[1].replace("\n", "")
             line = line[1:]
             if "CONTEST" in l:
                 self.cat_contest = line
@@ -232,14 +274,13 @@ class Contest(object):
             self.cat_band,
             self.cat_assisted,
             self.cat_power,
-            self.mode
+            self.mode,
         )
         infile.close()
 
     def process(self):
-        """
-        Apply tools to the log, defined in tools dictionary
-        :return: None
+        """Apply tools to the log, defined in tools dictionary
+        :return: None.
         """
         if self.download_ok:
             # Get toolDictionary, with the tools to be applied.
@@ -256,7 +297,9 @@ class Contest(object):
             for tool in tool_dict.names():
                 logging.info("Applying tool {}".format(tool))
                 start_time = time.time()
-                self.log = self.log.apply(lambda row: tool_dict.tools()[tool].apply_to_row(row), axis=1)
+                self.log = self.log.apply(
+                    lambda row: tool_dict.tools()[tool].apply_to_row(row), axis=1
+                )
                 tool_dict.tools()[tool].apply_to_all(self)
                 elapsed_time = time.time() - start_time
                 logging.info("  - {:.2f} seconds elapsed.".format(elapsed_time))
@@ -265,9 +308,17 @@ class Contest(object):
             self.log["datetime"] = pd.to_datetime(self.log["datetime"])
 
             # --- Save contest object to pickle file
-            with open("{}/{}.pickle".format(self.log_path, self.log_name.replace(".log", "")), 'wb') as output:
+            with open(
+                "{}/{}.pickle".format(self.log_path, self.log_name.replace(".log", "")),
+                "wb",
+            ) as output:
                 pickle.dump(self, output)
-            self.log.to_csv("{}/{}.csv".format(self.log_path, self.log_name.replace(".log", "")), index=False)
+            self.log.to_csv(
+                "{}/{}.csv".format(self.log_path, self.log_name.replace(".log", "")),
+                index=False,
+            )
 
         else:
-            logging.info("Pickle file already existing, proceeding without looping over tools.")
+            logging.info(
+                "Pickle file already existing, proceeding without looping over tools."
+            )

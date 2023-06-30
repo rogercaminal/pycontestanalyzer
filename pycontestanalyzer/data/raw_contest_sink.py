@@ -1,7 +1,8 @@
 """PyContestAnalyzer CQWW contest storage data sink module."""
 from os import PathLike
-from pandas import DataFrame
 from typing import ClassVar, Union
+
+from pandas import DataFrame
 
 from pycontestanalyzer.data.storage_sink import StorageDataSink
 
@@ -21,9 +22,5 @@ class RawCabrilloMetaDataSink(StorageDataSink):
 
     def prepare_output(self, data: DataFrame) -> DataFrame:
         """Prepare output to sink."""
-        _df = (
-            DataFrame(data.attrs, index=[1])
-            .T
-            .rename(columns={1: "value"})
-        )
+        _df = DataFrame(data.attrs, index=[1]).T.rename(columns={1: "value"})
         return _df

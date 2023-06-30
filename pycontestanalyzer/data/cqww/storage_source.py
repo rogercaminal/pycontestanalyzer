@@ -1,13 +1,10 @@
 """CQ WW Contest cabrillo data source module."""
 from os import PathLike
-from typing import Any, ClassVar, Optional, Union
+from typing import ClassVar, Optional, Union
 
 from pandas import DataFrame, to_datetime
-import numpy as np
 
-from pycontestanalyzer.data.raw_contest_cabrillo import (
-    RawContestCabrilloDataSource
-)
+from pycontestanalyzer.data.raw_contest_cabrillo import RawContestCabrilloDataSource
 
 
 class RawCQWWCabrilloDataSource(RawContestCabrilloDataSource):
@@ -57,12 +54,10 @@ class RawCQWWCabrilloDataSource(RawContestCabrilloDataSource):
         """Processes Performance output loaded data."""
         data.columns = list(self.dtypes.keys())
         data = (
-            data
-            .astype(self.dtypes)
+            data.astype(self.dtypes)
             .assign(
                 datetime=lambda x: to_datetime(
-                    x["date"] + " " + x["time"], 
-                    format="%Y-%m-%d %H%M"
+                    x["date"] + " " + x["time"], format="%Y-%m-%d %H%M"
                 ),
             )
             .drop(columns=["date", "time"])

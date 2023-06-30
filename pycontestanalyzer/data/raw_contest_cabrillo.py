@@ -1,16 +1,14 @@
 """Contest cabrillo data source module."""
+import re
 from collections import defaultdict
+from io import StringIO
 from os import PathLike
-from typing import Any, ClassVar, Iterable, Mapping, Optional, Union
+from typing import Any, ClassVar, Optional, Union
+from urllib.request import urlopen
 
 from pandas import DataFrame
 
 from pycontestanalyzer.data.storage_source import StorageDataSource
-
-
-import re
-from urllib.request import urlopen
-from io import StringIO
 
 
 class RawContestCabrilloDataSource(StorageDataSource):
@@ -45,9 +43,7 @@ class RawContestCabrilloDataSource(StorageDataSource):
                 prepending.
         """
         self.path = self.path.format(
-            callsign=callsign.lower(), 
-            year=year, 
-            mode=mode.lower()
+            callsign=callsign.lower(), year=year, mode=mode.lower()
         )
         super().__init__(prefix=self.prefix)
         self.callsign = callsign
@@ -60,8 +56,7 @@ class RawContestCabrilloDataSource(StorageDataSource):
         path: Union[str, PathLike],
         **kwargs: Any,
     ) -> DataFrame:
-        """Read data from contest website.
-        """
+        """Read data from contest website."""
         if file_format not in self.read_method_by_file_format:
             raise NotImplementedError(
                 f"Reading from format {self.file_format} not implemented."
@@ -73,11 +68,11 @@ class RawContestCabrilloDataSource(StorageDataSource):
             html = response.read()
         csv = "\n".join(
             re.findall(
-                r"\nQSO:,+(.+)", 
-                re.sub(f"[ \t\r\f\v]+", ",", html.decode("unicode_escape"))
+                r"\nQSO:,+(.+)",
+                re.sub("[ \t\r\f\v]+", ",", html.decode("unicode_escape")),
             )
         )
-        
+
         # Create dataframe
         _df = read_method(StringIO(csv), **kwargs)
 

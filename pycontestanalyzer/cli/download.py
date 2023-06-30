@@ -1,5 +1,6 @@
 """PyContestAnalyzer Download CLI definition."""
 from logging import getLogger
+
 from typer import Option, Typer
 
 from pycontestanalyzer.modules.download.main import main as _main
@@ -10,9 +11,7 @@ logger = getLogger(__name__)
 
 @app.command()
 def main(
-    contest: str = Option(
-        ..., "--contest", help="Name of the contest, e.g. cqww."
-    ), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     years: list[int] = Option(
         ...,
         "--years",
@@ -22,9 +21,10 @@ def main(
         ),
     ),
     mode: str = Option(
-        ..., "--mode", help="mode of the contest. Only available options: cw, "
-        "ssb, rrty, mixed."
-    ), 
+        ...,
+        "--mode",
+        help="mode of the contest. Only available options: cw, " "ssb, rrty, mixed.",
+    ),
     callsigns: list[str] = Option(
         ...,
         "--callsigns",
@@ -41,7 +41,7 @@ def main(
         contest,
         years,
         mode,
-        callsigns
+        callsigns,
     )
 
     _main(contest=contest, years=years, callsigns=callsigns, mode=mode)

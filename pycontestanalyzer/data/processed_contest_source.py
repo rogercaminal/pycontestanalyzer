@@ -1,16 +1,11 @@
 """Contest cabrillo data source module."""
-from os import path, PathLike
+from os import PathLike, path
 from typing import Any, ClassVar, Mapping, Union
 
 from pandas import DataFrame
 
 from pycontestanalyzer.config import get_settings
 from pycontestanalyzer.data.storage_source import StorageDataSource
-
-
-import re
-from urllib.request import urlopen
-from io import StringIO
 
 
 class ProcessedContestDataSource(StorageDataSource):
@@ -55,18 +50,12 @@ class ProcessedContestDataSource(StorageDataSource):
         self.path_data = (
             self.path if prefix_data is None else path.join(prefix_data, self.path)
         ).format(
-            callsign=self.callsign, 
-            contest=self.contest, 
-            year=self.year, 
-            mode=self.mode
+            callsign=self.callsign, contest=self.contest, year=self.year, mode=self.mode
         )
         self.path_meta = (
             self.path if prefix_meta is None else path.join(prefix_meta, self.path)
         ).format(
-            callsign=self.callsign,
-            contest=self.contest, 
-            year=self.year, 
-            mode=self.mode
+            callsign=self.callsign, contest=self.contest, year=self.year, mode=self.mode
         )
 
     def load(self) -> DataFrame:

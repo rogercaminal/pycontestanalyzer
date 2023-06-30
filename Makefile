@@ -1,87 +1,126 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
-.DEFAULT_GOAL := help
+APP_DIR ?= /opt/pycontestanalyzer
+BUILD_TYPE = docker
+DOCKER_OPTS ?=
+DOCKER_IMAGE_NAME ?= pycontestanalyzer
+DOCKER_IMAGE_NAME_TEST ?= pycontestanalyzer/test
+SRC_DIR ?= pycontestanalyzer
+TESTS_DIR ?= tests
+UID ?= $(shell id -u)
 
-define BROWSER_PYSCRIPT
-import os, webbrowser, sys
-
-from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
+define docker_run_cmd
+	$(MAKE) .env
+	docker run --rm -v ${PWD}:${APP_DIR} -w ${APP_DIR} --env-file .env -p 8050:8050 ${DOCKER_IMAGE_NAME_TEST}
 endef
-export BROWSER_PYSCRIPT
 
-define PRINT_HELP_PYSCRIPT
-import re, sys
-
-for line in sys.stdin:
-	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
-	if match:
-		target, help = match.groups()
-		print("%-20s %s" % (target, help))
+define docker_run_sh
+	$(MAKE) .env
+	docker run -it --rm \
+		-v ${PWD}:${APP_DIR} \
+		-w ${APP_DIR} \
+		-e AWS_CONFIG_FILE=/.aws/credentials \
+		--env-file .env \
+		-p 8050:8050 \
+		${DOCKER_IMAGE_NAME_TEST}
 endef
-export PRINT_HELP_PYSCRIPT
 
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+.env: ## ensures environment file with secrets exists or create from template.
+	@echo "Local .env file not found, creating from .env.example"
+	cp .env.example .env
 
-help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+.PHONY: build-test
+build-test: ## build image for testing purposes (test suite, linting and format checks)
+	docker build \
+		--build-arg APP_DIR=${APP_DIR}  \
+		--build-arg SRC_DIR=${SRC_DIR} \
+		--build-arg UID=${UID} \
+		-t ${DOCKER_IMAGE_NAME_TEST} \
+		-f Dockerfile \
+		$(DOCKER_OPTS) \
+		--target test \
+		.
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+.PHONY: build
+build: ## build main image used for production.
+	docker build \
+		--build-arg APP_DIR=${APP_DIR}  \
+		--build-arg SRC_DIR=${SRC_DIR} \
+		--build-arg UID=${UID} \
+		-t ${DOCKER_IMAGE_NAME} \
+		-f Dockerfile \
+		-p 8050:8050 \
+		$(DOCKER_OPTS) \
+		--target final \
+		.
 
-clean-build: ## remove build artifacts
-	rm -fr build/
-	rm -fr dist/
-	rm -fr .eggs/
-	find . -name '*.egg-info' -exec rm -fr {} +
-	find . -name '*.egg' -exec rm -f {} +
+.PHONY: buildtype
+buildtype: ## display build type (currently docker supported)
+	@echo $(BUILD_TYPE)
 
-clean-pyc: ## remove Python file artifacts
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -fr {} +
+.PHONY: format-check
+format-check: build-test ## check formatting and import sorting against diff.
+	$(docker_run_cmd) ruff check --diff $(SRC_DIR) $(TESTS_DIR)
+	$(docker_run_cmd) black --check --diff $(SRC_DIR) $(TESTS_DIR)
 
-clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
-	rm -fr .pytest_cache
+.PHONY: format
+format: build-test ## apply formatting and import sorting rules.
+	$(docker_run_cmd) ruff check --fix $(SRC_DIR) $(TESTS_DIR)
+	$(docker_run_cmd) black $(SRC_DIR) $(TESTS_DIR)
 
-lint/flake8: ## check style with flake8
-	flake8 pycontestanalyzer tests
+.PHONY: help
+help: ## display available recipes with descriptions.
+	@echo "Usage: make <target>"
+	@echo ""
+	@echo "Targets:\n"
+	@fgrep "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*\(## .*\)/\1 \2/' | column -t -s '##'
 
-lint: lint/flake8 ## check style
+.PHONY: install-dev
+install-dev: ## install Python dependencies for testing purposes.
+	pip install -r requirements-dev.txt
 
-test: ## run tests quickly with the default Python
-	python setup.py test
+.PHONY: install-precommit-hooks
+install-precommit-hooks: ## install precommit hooks (linting and formatting).
+	@echo "Installing pre-commit hooks!"
+	@echo "Make sure you have pre-commit installed on your system (`brew install pre-commit`)"
+	pre-commit install
 
-test-all: ## run tests on every Python version with tox
-	tox
+.PHONY: install
+install: ## install Python dependencies for production.
+	pip install -r requirements.txt
 
-coverage: ## check code coverage quickly with the default Python
-	coverage run --source pycontestanalyzer setup.py test
-	coverage report -m
-	coverage html
-	$(BROWSER) htmlcov/index.html
+.PHONY: lint
+lint: build-test ## apply linting rules to source code and tests.
+	$(docker_run_cmd) pylint $(SRC_DIR)
+	$(docker_run_cmd) pylint --disable=missing-function-docstring,missing-module-docstring,missing-class-docstring,too-few-public-methods,redefined-outer-name,unused-argument $(TESTS_DIR)
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/pycontestanalyzer.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ pycontestanalyzer
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	$(BROWSER) docs/_build/html/index.html
+.PHONY: local-setup
+local-setup: .env install install-dev install-precommit-hooks ## install necessary dependencies for locat setup in current environment.
+	@echo "Local setup completed!"
+	@echo "It is recommended to restart you IDE/Editor."
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+.PHONY: local-setup-with-venv
+local-setup-with-venv: .env install-precommit-hooks ## install necessary dependencies for locat setup in a new virtual environment.
+	@echo "creating virtualenv ..."
+	@read -p "Python version?: " PYTHONVERSION
+	@pyenv global ${PYTHONVERSION}
+	@rm -rf .venv
+	@python3 -m venv .venv
+	@./.venv/bin/pip install -U pip
+	@./.venv/bin/pip install -r requirements.txt
+	@./.venv/bin/pip install -r requirements-dev.txt
+	@echo "Please run 'source .venv/bin/activate' to be able to activate the virtual environment you created for this local setup."
 
-release: dist ## package and upload a release
-	twine upload dist/*
 
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
+.PHONY: run-all-checks
+run-all-checks: build-test format-check lint run-tests ## build test container, run format checks, linting and testing.
+	@echo ok
 
-install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+.PHONY: run-sh
+run-sh: build-test ## enter an intercative shell session inside test container for debugging.
+	$(docker_run_sh) /bin/bash
+
+.PHONY: run-tests
+run-tests: build-test ## run test suite on source code and render coverage information.
+	$(docker_run_cmd) /bin/bash -c " \
+		coverage erase \
+		&& coverage run -m pytest --doctest-modules --junitxml=junit/test-results.xml $(TESTS_DIR) \
+		&& coverage xml -i"

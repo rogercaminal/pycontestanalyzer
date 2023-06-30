@@ -1,27 +1,23 @@
-"""Download the data from the server"""
+"""Download the data from the server."""
 import logging
 
 from pycontestanalyzer.config import get_settings
 from pycontestanalyzer.data.cqww.storage_source import RawCQWWCabrilloDataSource
 from pycontestanalyzer.data.raw_contest_sink import (
-    RawCabrilloDataSink, RawCabrilloMetaDataSink
+    RawCabrilloDataSink,
+    RawCabrilloMetaDataSink,
 )
 from pycontestanalyzer.modules.download.data_manipulation import data_manipulation
 
 logger = logging.getLogger(__name__)
 
 
-def main (
-    contest: str, 
-    years: list[int], 
-    callsigns: list[str], 
-    mode: str
-) -> None:
+def main(contest: str, years: list[int], callsigns: list[str], mode: str) -> None:
     """Main download & data engineering entrypoint.
 
     This method performs the main workflow in order to download the cabrillo file(s)
     from the given website, and implement the set of features that then will be used
-    in the plotting step. The resulting data set is stored locally in the path 
+    in the plotting step. The resulting data set is stored locally in the path
     specified in the settings.
 
     Args:
@@ -40,9 +36,7 @@ def main (
             logger.info(f"  - {year}")
             # Get data
             contest_data = RawCQWWCabrilloDataSource(
-                callsign=callsign, 
-                year=year, 
-                mode=mode
+                callsign=callsign, year=year, mode=mode
             ).load()
 
             # Feature engineering
@@ -50,14 +44,10 @@ def main (
 
             # Store data
             prefix_raw_storage_data = settings.storage.paths.raw_data.format(
-                contest=contest,
-                mode=mode,
-                callsign=callsign
+                contest=contest, mode=mode, callsign=callsign
             )
             prefix_raw_storage_metadata = settings.storage.paths.raw_metadata.format(
-                contest=contest,
-                mode=mode,
-                callsign=callsign
+                contest=contest, mode=mode, callsign=callsign
             )
             logger.info(f"Store data in {prefix_raw_storage_data}")
             RawCabrilloDataSink(prefix=prefix_raw_storage_data).push(contest_data)
