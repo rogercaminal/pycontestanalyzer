@@ -1,0 +1,3 @@
+default:
+  download:
+    path_raw: "data/raw"

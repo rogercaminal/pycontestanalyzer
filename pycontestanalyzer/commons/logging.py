@@ -1,4 +1,4 @@
-"""ALMO Logging utilities module."""
+"""PyContestAnalyzer Logging utilities module."""
 from logging.config import dictConfig
 
 from pycontestanalyzer.config import get_settings

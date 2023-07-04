@@ -1,4 +1,4 @@
-"""ALMO Storage Data Source class definition."""
+"""PyContestAnalyzer Storage Data Source class definition."""
 import os
 from abc import ABC
 from os import PathLike

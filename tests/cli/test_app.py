@@ -11,9 +11,7 @@ def fixture_runner(caplog: LogCaptureFixture):
     caplog.clear()
 
 
-@fixture(
-    name="command", params=["download"]
-)
+@fixture(name="command", params=["download"])
 def fixture_command(request: FixtureRequest) -> str:
     return request.param
 

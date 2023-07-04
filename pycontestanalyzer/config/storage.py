@@ -1,3 +1,5 @@
+"""Storage settings for PyContestAnalyzer."""
+
 from pycontestanalyzer.config.settings import BaseSettings
 
 
@@ -17,7 +19,7 @@ class StorageSettings(BaseSettings):
 
     @property
     def paths(self):
-        """Render ALMO S3 paths from settings.
+        """Render PyContestAnalyzer paths from settings.
 
         This method renders the paths for types in 'optimisation', 'performance' and
         'temporary' by interpolating:

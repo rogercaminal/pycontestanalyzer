@@ -7,7 +7,7 @@ from dynaconf import Dynaconf
 
 from pycontestanalyzer.config.settings import Settings
 
-ROOT_PATH = Path(__file__).absolute().parent.parent
+ROOT_PATH = Path(__file__).absolute().parent.parent.parent
 SETTINGS_DIR = ROOT_PATH / "settings"
 SETTINGS_FILES = [
     SETTINGS_DIR / "download.yaml",
