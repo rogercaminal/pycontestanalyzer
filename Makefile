@@ -9,7 +9,12 @@ UID ?= $(shell id -u)
 
 define docker_run_cmd
 	$(MAKE) .env
-	docker run --rm -v ${PWD}:${APP_DIR} -w ${APP_DIR} --env-file .env -p 8050:8050 ${DOCKER_IMAGE_NAME_TEST}
+	docker run --rm \
+		-v ${PWD}:${APP_DIR}  \
+		-w ${APP_DIR} \
+		-p 8050:8050 \
+		--env-file .env \
+		${DOCKER_IMAGE_NAME_TEST}
 endef
 
 define docker_run_sh
@@ -17,9 +22,8 @@ define docker_run_sh
 	docker run -it --rm \
 		-v ${PWD}:${APP_DIR} \
 		-w ${APP_DIR} \
-		-e AWS_CONFIG_FILE=/.aws/credentials \
-		--env-file .env \
 		-p 8050:8050 \
+		--env-file .env \
 		${DOCKER_IMAGE_NAME_TEST}
 endef
 
@@ -75,7 +79,7 @@ help: ## display available recipes with descriptions.
 
 .PHONY: install-dev
 install-dev: ## install Python dependencies for testing purposes.
-	pip install -r requirements-dev.txt
+	pip install -r requirements_dev.txt
 
 .PHONY: install-precommit-hooks
 install-precommit-hooks: ## install precommit hooks (linting and formatting).
@@ -106,7 +110,7 @@ local-setup-with-venv: .env install-precommit-hooks ## install necessary depende
 	@python3 -m venv .venv
 	@./.venv/bin/pip install -U pip
 	@./.venv/bin/pip install -r requirements.txt
-	@./.venv/bin/pip install -r requirements-dev.txt
+	@./.venv/bin/pip install -r requirements_dev.txt
 	@echo "Please run 'source .venv/bin/activate' to be able to activate the virtual environment you created for this local setup."
 
 
