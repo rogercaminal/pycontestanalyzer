@@ -1,6 +1,11 @@
 """PyContestAnalyzer plot base class."""
 from abc import ABC, abstractmethod
 
+from pandas import DataFrame, concat
+from plotly.graph_objects import Figure
+
+from pycontestanalyzer.data.processed_contest_source import ProcessedContestDataSource
+
 
 class PlotBase(ABC):
     """Plot abstract base class.
@@ -10,13 +15,40 @@ class PlotBase(ABC):
     way to create a plotly object, implemented by each plot subclass.
     """
 
-    # pylint: disable=too-few-public-methods
+    def __init__(self, callsigns: list[str], contest: str, years: list[int], mode: str):
+        """Init method of the base class."""
+        self.callsigns = callsigns
+        self.contest = contest
+        self.years = years
+        self.mode = mode
+        self.data = self._get_inputs()
+
+    def _get_inputs(self) -> dict[str, DataFrame]:
+        """Get downloaded inputs needed for the plot."""
+        data = []
+        for callsign in self.callsigns:
+            for year in self.years:
+                data_filtered = (
+                    ProcessedContestDataSource(
+                        callsign=callsign,
+                        contest=self.contest,
+                        year=year,
+                        mode=self.mode,
+                    )
+                    .load()
+                    .assign(year=year)
+                    .assign(contest=self.contest)
+                )
+                data.append(data_filtered)
+        return concat(data, sort=False)
 
     @abstractmethod
-    def plot(self, save: bool = False) -> None:
+    def plot(self, save: bool = False) -> None | Figure:
         """Create plot.
 
         Args:
-            save (bool, optional): saves html file to be read locally.
-                Defaults to False.
+            save (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            None | Figure: _description_
         """
