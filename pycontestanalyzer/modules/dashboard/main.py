@@ -6,10 +6,9 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 # from pycontestanalyzer.modules.dashboard.layout import get_layout
-from pycontestanalyzer.modules.download.main import main as _main_download
+from pycontestanalyzer.modules.download.main import exists, main as _main_download
+from pycontestanalyzer.plots.common.plot_frequency import PlotFrequency
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
-
-N_CLICKS = 0
 
 
 def main(debug: bool = False) -> None:
@@ -23,48 +22,55 @@ def main(debug: bool = False) -> None:
     """
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+    # Buttons
+    radio_contest = html.Div(
+        [
+            dcc.RadioItems(
+                id="contest",
+                options=[
+                    {"label": "CQ WW DX", "value": "cqww"},
+                    {"label": "CQ WPX", "value": "cqwpx"},
+                    {"label": "IARU HF", "value": "iaruhf"},
+                ],
+                value="cqww",
+            )
+        ],
+        style={"width": "25%", "display": "inline-block"},
+    )
+
+    radio_mode = html.Div(
+        [
+            dcc.RadioItems(
+                id="mode",
+                options=[
+                    {"label": "CW", "value": "cw"},
+                    {"label": "SSB", "value": "ssb"},
+                ],
+                value="cw",
+            )
+        ],
+        style={"width": "25%", "display": "inline-block"},
+    )
+
+    dropdown_year_call = html.Div(
+        dcc.Dropdown(
+            id="callsigns_years",
+            options=[
+                {"label": "2021 - EA6FO", "value": "EA6FO,2021"},
+                {"label": "2022 - EF6T", "value": "EF6T,2022"},
+            ],
+            multi=True,
+            value=None,
+        ),
+        style={"width": "25%", "display": "inline-block"},
+    )
+
     # app.layout = get_layout()
     app.layout = html.Div(
         [
-            html.Div(
-                [
-                    dcc.RadioItems(
-                        id="contest",
-                        options=[
-                            {"label": "CQ WW DX", "value": "cqww"},
-                            {"label": "CQ WPX", "value": "cqwpx"},
-                            {"label": "IARU HF", "value": "iaruhf"},
-                        ],
-                        value="cqww",
-                    )
-                ],
-                style={"width": "25%", "display": "inline-block"},
-            ),
-            html.Div(
-                [
-                    dcc.RadioItems(
-                        id="mode",
-                        options=[
-                            {"label": "CW", "value": "cw"},
-                            {"label": "SSB", "value": "ssb"},
-                            {"label": "MIXED", "value": "mixed"},
-                        ],
-                        value="cw",
-                    )
-                ],
-                style={"width": "25%", "display": "inline-block"},
-            ),
-            html.Div(
-                dcc.Dropdown(
-                    id="year_callsigns",
-                    options=[
-                        {"label": "2021 - EA6FO", "value": "2021,EA6FO"},
-                        {"label": "2022 - EF6T", "value": "2022,EF6T"},
-                    ],
-                    multi=True,
-                ),
-                style={"width": "25%", "display": "inline-block"},
-            ),
+            radio_contest,
+            radio_mode,
+            dropdown_year_call,
             html.Div(
                 html.Button(
                     id="submit-button",
@@ -73,51 +79,76 @@ def main(debug: bool = False) -> None:
                     style={"fontsize": 24},
                 )
             ),
-            html.Div(id="printout_arguments"),
-            html.Div(dcc.Graph(id="qsos_hour")),
+            html.P(id="download"),
+            html.Div(dcc.Graph(id="qsos_hour", figure=go.Figure())),
+            html.Div(dcc.Graph(id="frequency", figure=go.Figure())),
         ]
     )
 
     @app.callback(
-        Output("printout_arguments", "children"),
+        Output("download", "children"),
         [Input("submit-button", "n_clicks")],
         [
             State("contest", "value"),
             State("mode", "value"),
-            State("year_callsigns", "value"),
+            State("callsigns_years", "value"),
         ],
     )
-    def run_download(n_clicks, contest, mode, year_callsigns):
-        # if year_callsigns is None:
-        if n_clicks <= N_CLICKS:
-            return ""
-        for year_callsign in year_callsigns:
-            year = int(year_callsign.split(",")[0])
-            callsign = year_callsign.split(",")[1]
-            _main_download(
-                contest=contest, years=[year], callsigns=[callsign], mode=mode
-            )
-        return "Downloaded!"
+    def run_download(n_clicks, contest, mode, callsigns_years):
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                if not exists(contest=contest, year=year, mode=mode, callsign=callsign):
+                    _main_download(
+                        contest=contest, years=[year], callsigns=[callsign], mode=mode
+                    )
+        return n_clicks
 
     @app.callback(
         Output("qsos_hour", "figure"),
-        [Input("printout_arguments", "children")],
+        [Input("submit-button", "n_clicks")],
         [
             State("contest", "value"),
             State("mode", "value"),
-            State("year_callsigns", "value"),
+            State("callsigns_years", "value"),
         ],
     )
-    def plot_qsos_hour(printout_text, contest, mode, year_callsigns):
-        if printout_text != "Downloaded!":
-            return go.Figure()
-        callsigns = []
-        years = []
-        for year_callsign in year_callsigns:
-            years.append(int(year_callsign.split(",")[0]))
-            callsigns.append(year_callsign.split(",")[1])
-        return PlotQsosHour(
-            callsigns=callsigns, contest=contest, mode=mode, years=years
-        ).plot()
+    def plot_qsos_hour(n_clicks, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotQsosHour(
+                contest=contest, mode=mode, callsigns_years=f_callsigns_years
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("frequency", "figure"),
+        [Input("submit-button", "n_clicks")],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_frequency(n_clicks, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotFrequency(
+                contest=contest, mode=mode, callsigns_years=f_callsigns_years
+            ).plot()
+        return go.Figure()
 
     app.run(debug=debug, host="0.0.0.0", port=8050)

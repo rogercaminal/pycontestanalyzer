@@ -15,31 +15,29 @@ class PlotBase(ABC):
     way to create a plotly object, implemented by each plot subclass.
     """
 
-    def __init__(self, callsigns: list[str], contest: str, years: list[int], mode: str):
+    def __init__(self, contest: str, mode: str, callsigns_years: list[tuple]):
         """Init method of the base class."""
-        self.callsigns = callsigns
         self.contest = contest
-        self.years = years
         self.mode = mode
+        self.callsigns_years = callsigns_years
         self.data = self._get_inputs()
 
     def _get_inputs(self) -> dict[str, DataFrame]:
         """Get downloaded inputs needed for the plot."""
         data = []
-        for callsign in self.callsigns:
-            for year in self.years:
-                data_filtered = (
-                    ProcessedContestDataSource(
-                        callsign=callsign,
-                        contest=self.contest,
-                        year=year,
-                        mode=self.mode,
-                    )
-                    .load()
-                    .assign(year=year)
-                    .assign(contest=self.contest)
+        for callsign, year in self.callsigns_years:
+            data_filtered = (
+                ProcessedContestDataSource(
+                    callsign=callsign,
+                    contest=self.contest,
+                    year=year,
+                    mode=self.mode,
                 )
-                data.append(data_filtered)
+                .load()
+                .assign(year=year)
+                .assign(contest=self.contest)
+            )
+            data.append(data_filtered)
         return concat(data, sort=False)
 
     @abstractmethod

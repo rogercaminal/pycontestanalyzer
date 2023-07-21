@@ -40,8 +40,13 @@ class PlotQsosHour(PlotBase):
 
         grp = (
             DataFrame(np.arange(0, 48, 1), columns=["hour_rounded"])
-            .merge(DataFrame(grp["mycall"].unique(), columns=["mycall"]), how="cross")
-            .merge(DataFrame(grp["year"].unique(), columns=["year"]), how="cross")
+            .merge(
+                DataFrame(
+                    grp[["mycall", "year"]].drop_duplicates(),
+                    columns=["mycall", "year"],
+                ),
+                how="cross",
+            )
             .merge(grp[["band", "band_id"]].drop_duplicates(), how="cross")
             .merge(
                 grp,
@@ -80,7 +85,7 @@ class PlotQsosHour(PlotBase):
         fig = go.Figure(layout=layout)
 
         # Create bar plot
-        offset_ratio = 1 / (len(grp["mycall"].unique()) + 1)
+        offset_ratio = 1 / (len(grp[["mycall", "year"]].drop_duplicates()) + 1)
         rows = (
             grp[["year", "mycall"]].drop_duplicates().reset_index(drop=True).iterrows()
         )
@@ -99,8 +104,9 @@ class PlotQsosHour(PlotBase):
                     offsetgroup=str(i),
                     offset=(i - 1) * offset_ratio,
                     width=offset_ratio,
+                    showlegend=True if i == 0 else False,
                     legendgroup=mycall,
-                    legendgrouptitle_text=mycall,
+                    legendgrouptitle_text="bands",
                     name=f"{band}m",
                     marker_color=COLORS[band],
                     marker_line=dict(width=2, color="#333"),
