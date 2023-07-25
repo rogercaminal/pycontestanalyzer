@@ -1,11 +1,11 @@
 """Plot QSO rate."""
 
+import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
-from plotly.subplots import make_subplots
+from pandas import to_datetime, to_timedelta
 
 from pycontestanalyzer.plots.plot_base import PlotBase
-from pycontestanalyzer.utils import BANDMAP
 
 COLORS = {
     1: "#F28F1D",
@@ -29,42 +29,29 @@ class PlotFrequency(PlotBase):
         Returns:
             None | Figure: _description_
         """
-        fig = make_subplots(rows=6, cols=1, shared_xaxes=True)
-        fig.update_layout(
-            hovermode="x",
-            height=1200,
+        _data = self.data.assign(
+            callsign_year=lambda x: x["mycall"] + "(" + x["year"].astype(str) + ")",
+            dummy_datetime=lambda x: to_datetime("2000-01-01")
+            + to_timedelta(x["hour"], "H"),
+        )
+        fig = px.scatter(
+            _data,
+            x="dummy_datetime",
+            y="frequency",
+            color="callsign_year",
+            facet_row="band",
+            labels={
+                "callsign_year": "Callsign (year)",
+                "dummy_datetime": "Dummy contest datetime",
+                "frequency": "Frequency",
+                "band": "Band",
+            },
+            category_orders={"band": [10, 15, 20, 40, 80, 160]},
         )
 
-        for k, (callsign, year) in enumerate(self.callsigns_years):
-            for j, band in enumerate([10, 15, 20, 40, 80, 160]):
-                _data = (
-                    self.data.query(f"(mycall.str.lower() == '{callsign.lower()}')")
-                    .query(f"(year == {year})")
-                    .query(f"(band == {band})")
-                    .assign(
-                        callsign_year=lambda x: x["mycall"]
-                        + "("
-                        + x["year"].astype(str)
-                        + ")"
-                    )
-                )
-                fig.append_trace(
-                    go.Scatter(
-                        x=_data["hour"],
-                        y=_data["frequency"],
-                        mode="markers",
-                        marker={"color": COLORS[k + 1]},
-                        name=f"{callsign} - {year}",
-                        legendgroup=f"group{k+1}",
-                        showlegend=True if j == 0 else False,
-                    ),
-                    row=j + 1,
-                    col=1,
-                )
-                fig.update_yaxes(
-                    range=BANDMAP[band], title="Frequency", row=j + 1, col=1
-                )
-        fig.update_xaxes(title="Contest hour", row=6, col=1)
+        fig.update_layout(hovermode="x unified")
+        fig.update_xaxes(title="Dummy contest datetime")
+        fig.update_yaxes(title="Frequency", matches=None)
 
         if not save:
             return fig

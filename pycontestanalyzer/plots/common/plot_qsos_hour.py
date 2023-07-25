@@ -1,6 +1,7 @@
 """Plot QSO rate."""
 
 import numpy as np
+import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
 from pandas import DataFrame
@@ -54,7 +55,7 @@ class PlotQsosHour(PlotBase):
                 on=["hour_rounded", "mycall", "year", "band", "band_id"],
             )
             .fillna(0)
-            .astype({"qsos": int})
+            .astype({"qsos": int, "band": str})
             .merge(
                 (
                     grp.groupby(
@@ -64,56 +65,30 @@ class PlotQsosHour(PlotBase):
                 how="left",
                 on=["mycall", "year", "hour_rounded"],
             )
+            .fillna(0)
+            .assign(
+                callsign_year=lambda x: x["mycall"] + "(" + x["year"].astype(str) + ")",
+            )
         )
 
-        # Create figure and layout
-        layout = go.Layout(
-            title="QSOs / hour",
-            xaxis={"title": "Contest hour"},
-            yaxis={"title": "# QSOs"},
-            yaxis2=go.layout.YAxis(
-                visible=False,
-                matches="y",
-                overlaying="y",
-                anchor="x",
-            ),
-            barmode="stack",
-            showlegend=True,
-            hovermode="closest",
-            yaxis_range=[0, grp["total_qsos"].max() * 1.1],
+        fig = px.bar(
+            grp,
+            x="hour_rounded",
+            y="qsos",
+            custom_data=["total_qsos"],
+            color="band",
+            facet_row="callsign_year",
+            labels={
+                "callsign_year": "Callsign (year)",
+                "hour_rounded": "Contest hour",
+                "qsos": "QSOs",
+                "band": "Band",
+            },
         )
-        fig = go.Figure(layout=layout)
+        fig.update_layout(hovermode="x unified")
+        fig.update_xaxes(title="Contest hour")
+        fig.update_yaxes(title="QSOs")
 
-        # Create bar plot
-        offset_ratio = 1 / (len(grp[["mycall", "year"]].drop_duplicates()) + 1)
-        rows = (
-            grp[["year", "mycall"]].drop_duplicates().reset_index(drop=True).iterrows()
-        )
-        for i, row in rows:
-            year = row["year"]
-            mycall = row["mycall"]
-            for band in grp["band"].unique():
-                dff = grp.query(
-                    f"(year == {year}) & (mycall == '{mycall}') & (band == {band})"
-                )
-                fig.add_bar(
-                    x=dff["hour_rounded"],
-                    y=dff["qsos"],
-                    customdata=dff[["band", "mycall", "total_qsos", "year"]],
-                    yaxis=f"y{i+1}",
-                    offsetgroup=str(i),
-                    offset=(i - 1) * offset_ratio,
-                    width=offset_ratio,
-                    showlegend=True if i == 0 else False,
-                    legendgroup=mycall,
-                    legendgrouptitle_text="bands",
-                    name=f"{band}m",
-                    marker_color=COLORS[band],
-                    marker_line=dict(width=2, color="#333"),
-                    hovertemplate="<b>%{customdata[1]} (%{customdata[3]}) \
-                        <br>hour:%{x}</b><br>QSOs %{customdata[0]}m:%{y} \
-                            <br>QSOs total:%{customdata[2]}",
-                )
         if not save:
             return fig
         pyo.plot(fig, filename="qsos_hour.html")
