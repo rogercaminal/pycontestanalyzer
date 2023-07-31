@@ -38,7 +38,7 @@ class PlotBase(ABC):
                 .assign(contest=self.contest)
             )
             data.append(data_filtered)
-        return concat(data, sort=False)
+        return concat(data, sort=False).reset_index(drop=True)
 
     @abstractmethod
     def plot(self, save: bool = False) -> None | Figure:

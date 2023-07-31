@@ -3,12 +3,12 @@
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
-from pandas import to_datetime, to_timedelta
+from pandas import Grouper, to_datetime, to_timedelta
 
 from pycontestanalyzer.plots.plot_base import PlotBase
 
 
-class PlotRollingRate(PlotBase):
+class PlotRate(PlotBase):
     """Plot Rate."""
 
     def __init__(
@@ -50,19 +50,19 @@ class PlotRollingRate(PlotBase):
                 + to_timedelta(x["hour"], "H"),
                 callsign_year=lambda x: x["mycall"] + "(" + x["year"].astype(str) + ")",
             )
+            .groupby(
+                [
+                    Grouper(key="dummy_datetime", freq=f"{self.time_bin}Min"),
+                    "callsign_year",
+                ],
+                as_index=False,
+            )[self.target]
+            .sum()
             .reset_index(drop=True)
-            .join(
-                self.data.set_index("datetime")
-                .groupby(["mycall", "year"])[[self.target]]
-                .transform(
-                    lambda d: d.rolling(f"{self.time_bin}T", min_periods=1).sum()
-                )
-                .reset_index(drop=True)
-                .rename(
-                    columns={
-                        self.target: f"{self.target}_sum",
-                    }
-                )
+            .rename(
+                columns={
+                    self.target: f"{self.target}_sum",
+                }
             )
         )
 
@@ -79,8 +79,8 @@ class PlotRollingRate(PlotBase):
         )
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Dummy contest datetime")
-        fig.update_yaxes(title=f"QSOs / {self.time_bin}min (rolling sum)")
+        fig.update_yaxes(title=f"QSOs / {self.time_bin}min")
 
         if not save:
             return fig
-        pyo.plot(fig, filename="rolling_rate.html")
+        pyo.plot(fig, filename="rate.html")

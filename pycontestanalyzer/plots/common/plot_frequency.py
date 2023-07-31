@@ -7,15 +7,6 @@ from pandas import to_datetime, to_timedelta
 
 from pycontestanalyzer.plots.plot_base import PlotBase
 
-COLORS = {
-    1: "#F28F1D",
-    2: "#F6C619",
-    3: "#FADD75",
-    4: "#2B6045",
-    5: "#5EB88A",
-    6: "#9ED4B9",
-}
-
 
 class PlotFrequency(PlotBase):
     """Plot QSOs Hour."""

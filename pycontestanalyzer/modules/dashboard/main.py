@@ -4,14 +4,22 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
+from pandas import read_parquet
 
 # from pycontestanalyzer.modules.dashboard.layout import get_layout
 from pycontestanalyzer.modules.download.main import exists, main as _main_download
 from pycontestanalyzer.plots.common.plot_frequency import PlotFrequency
+from pycontestanalyzer.plots.common.plot_qso_direction import PlotQsoDirection
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
+from pycontestanalyzer.plots.common.plot_rate import PlotRate
+from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
+from pycontestanalyzer.utils import CONTINENTS
+
+HISTORY_CQWW = read_parquet("pycontestanalyzer/data/cqww/history.parquet")
+YEAR_MIN = 2020
 
 
-def main(debug: bool = False) -> None:
+def main(debug: bool = False) -> None:  # noqa: PLR0915
     """Main dashboard entrypoint.
 
     This method generates the dashboard to be displayed with the analysis of each
@@ -29,8 +37,6 @@ def main(debug: bool = False) -> None:
                 id="contest",
                 options=[
                     {"label": "CQ WW DX", "value": "cqww"},
-                    {"label": "CQ WPX", "value": "cqwpx"},
-                    {"label": "IARU HF", "value": "iaruhf"},
                 ],
                 value="cqww",
             )
@@ -56,8 +62,10 @@ def main(debug: bool = False) -> None:
         dcc.Dropdown(
             id="callsigns_years",
             options=[
-                {"label": "2021 - EA6FO", "value": "EA6FO,2021"},
-                {"label": "2022 - EF6T", "value": "EF6T,2022"},
+                {"label": f"{y} - {c}", "value": f"{c},{y}"}
+                for y, c in HISTORY_CQWW.query("(mode=='cw')")[
+                    ["year", "callsign"]
+                ].to_numpy()
             ],
             multi=True,
             value=None,
@@ -80,8 +88,56 @@ def main(debug: bool = False) -> None:
                 )
             ),
             html.P(id="download"),
-            html.Div(dcc.Graph(id="qsos_hour", figure=go.Figure())),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.Checklist(
+                            id="cl_qsos_hour_continent",
+                            options=CONTINENTS,
+                            value=CONTINENTS,
+                            inline=True,
+                        )
+                    ),
+                    html.Div(dcc.Graph(id="qsos_hour", figure=go.Figure())),
+                ]
+            ),
             html.Div(dcc.Graph(id="frequency", figure=go.Figure())),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_qso_rate_time_bin",
+                            options=[5, 15, 30, 60],
+                            value=60,
+                            inline=True,
+                        )
+                    ),
+                    html.Div(dcc.Graph(id="qso_rate", figure=go.Figure())),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_qso_rolling_rate_time_bin",
+                            options=[5, 15, 30, 60],
+                            value=60,
+                            inline=True,
+                        )
+                    ),
+                    html.Div(dcc.Graph(id="qso_rolling_rate", figure=go.Figure())),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RangeSlider(
+                            0, 48, id="range_hour_qso_direction", value=[0, 48]
+                        )
+                    ),
+                    html.Div(dcc.Graph(id="qso_direction", figure=go.Figure())),
+                ]
+            ),
         ]
     )
 
@@ -107,14 +163,14 @@ def main(debug: bool = False) -> None:
 
     @app.callback(
         Output("qsos_hour", "figure"),
-        [Input("submit-button", "n_clicks")],
+        [Input("submit-button", "n_clicks"), Input("cl_qsos_hour_continent", "value")],
         [
             State("contest", "value"),
             State("mode", "value"),
             State("callsigns_years", "value"),
         ],
     )
-    def plot_qsos_hour(n_clicks, contest, mode, callsigns_years):
+    def plot_qsos_hour(n_clicks, continents, contest, mode, callsigns_years):
         f_callsigns_years = []
         if n_clicks > 0:
             for callsign_year in callsigns_years:
@@ -124,7 +180,10 @@ def main(debug: bool = False) -> None:
                 if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
                     raise dash.exceptions.PreventUpdate
             return PlotQsosHour(
-                contest=contest, mode=mode, callsigns_years=f_callsigns_years
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                continents=continents,
             ).plot()
         return go.Figure()
 
@@ -148,6 +207,90 @@ def main(debug: bool = False) -> None:
                     raise dash.exceptions.PreventUpdate
             return PlotFrequency(
                 contest=contest, mode=mode, callsigns_years=f_callsigns_years
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("qso_rate", "figure"),
+        [Input("submit-button", "n_clicks"), Input("rb_qso_rate_time_bin", "value")],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_qso_rate(n_clicks, time_bin, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotRate(
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                time_bin_size=time_bin,
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("qso_rolling_rate", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_qso_rolling_rate_time_bin", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_qso_rolling_rate(n_clicks, time_bin, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotRollingRate(
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                time_bin_size=time_bin,
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("qso_direction", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("range_hour_qso_direction", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_qso_direction(n_clicks, contest_hours, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotQsoDirection(
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                contest_hours=contest_hours,
             ).plot()
         return go.Figure()
 

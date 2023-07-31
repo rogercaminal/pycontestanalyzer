@@ -3,4 +3,4 @@ dynaconf_merge: true
 default:
   storage:
     prefix: "@jinja {{env['PYCONTESTANALYZERSTORAGE'] | default(env['HOME'])}}/contest_data"
-    partitions: "contest={contest}/mode={mode}/callsign={callsign}"
+    partitions: "contest={contest}/mode={mode}/year={year}/callsign={callsign}"

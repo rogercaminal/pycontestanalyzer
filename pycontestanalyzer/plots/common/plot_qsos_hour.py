@@ -7,19 +7,30 @@ import plotly.offline as pyo
 from pandas import DataFrame
 
 from pycontestanalyzer.plots.plot_base import PlotBase
-
-COLORS = {
-    10: "#F28F1D",
-    15: "#F6C619",
-    20: "#FADD75",
-    40: "#2B6045",
-    80: "#5EB88A",
-    160: "#9ED4B9",
-}
+from pycontestanalyzer.utils import CONTINENTS
 
 
 class PlotQsosHour(PlotBase):
     """Plot QSOs Hour."""
+
+    def __init__(
+        self,
+        contest: str,
+        mode: str,
+        callsigns_years: list[tuple],
+        continents: list[str] | None = None,
+    ):
+        """Init method of the PlotQsosHour class.
+
+        Args:
+            contest (str): Contest name
+            mode (str): Mode of the contest
+            callsigns_years (list[tuple]): Callsign and year of the contest
+            continents (list[str] | None): List of continents to filter out. Defaults
+                to None.
+        """
+        super().__init__(contest=contest, mode=mode, callsigns_years=callsigns_years)
+        self.continents: list[str] = continents or CONTINENTS
 
     def plot(self, save: bool = False) -> None | go.Figure:
         """Create plot.
@@ -33,6 +44,7 @@ class PlotQsosHour(PlotBase):
         # Groupby data
         grp = (
             self.data.assign(hour_rounded=lambda x: np.floor(x["hour"]))
+            .query(f"(continent.isin({self.continents}))")
             .groupby(
                 ["mycall", "year", "band", "band_id", "hour_rounded"], as_index=False
             )
