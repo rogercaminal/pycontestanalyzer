@@ -4,7 +4,6 @@ from typing import Any, Dict
 from pydantic import root_validator
 
 from pycontestanalyzer.config.base import BaseSettings
-from pycontestanalyzer.config.download import DownloadSettings
 from pycontestanalyzer.config.info import SettingsInfo
 from pycontestanalyzer.config.logging import LoggingSettings
 from pycontestanalyzer.config.storage import StorageSettings
@@ -18,7 +17,6 @@ def _make_lowercase(_: Any, values: Dict[str, Any]) -> Dict[str, Any]:
 class Settings(BaseSettings):
     """General Settings model."""
 
-    download: DownloadSettings
     info: SettingsInfo
     logging: LoggingSettings
     storage: StorageSettings

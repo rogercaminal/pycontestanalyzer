@@ -8,8 +8,8 @@ from pycontestanalyzer.config import get_settings
 from pycontestanalyzer.data.storage_source import StorageDataSource
 
 
-class ProcessedContestDataSource(StorageDataSource):
-    """Processed contest data source definition."""
+class ProcessedReverseBeaconDataSource(StorageDataSource):
+    """Processed RBN data source definition."""
 
     file_format: ClassVar[str] = "parquet"
     storage_options: ClassVar[Mapping[str, Any]] = {}
@@ -17,7 +17,6 @@ class ProcessedContestDataSource(StorageDataSource):
 
     def __init__(
         self,
-        callsign: str,
         contest: str,
         year: int,
         mode: str,
@@ -25,30 +24,20 @@ class ProcessedContestDataSource(StorageDataSource):
         """Processed contest cabrillo data source constructor.
 
         Args:
-            callsign: string with the callsign
             contest: string with the name of the contest
             year: integer with the year of the contest
             mode: string with the mode of the contest
         """
         settings = get_settings()
-        prefix_data = settings.storage.paths.raw_data
-        prefix_meta = settings.storage.paths.raw_metadata
+        prefix_data = settings.storage.paths.raw_rbn
 
         # super().__init__(prefix=self.prefix)
-        self.callsign = callsign
         self.contest = contest
         self.year = year
         self.mode = mode
         self.path_data = (
             self.path if prefix_data is None else path.join(prefix_data, self.path)
-        ).format(
-            callsign=self.callsign, contest=self.contest, year=self.year, mode=self.mode
-        )
-        self.path_meta = (
-            self.path if prefix_meta is None else path.join(prefix_meta, self.path)
-        ).format(
-            callsign=self.callsign, contest=self.contest, year=self.year, mode=self.mode
-        )
+        ).format(contest=self.contest, year=self.year, mode=self.mode)
 
     def load(self) -> DataFrame:
         """Load data from storage.
@@ -62,8 +51,4 @@ class ProcessedContestDataSource(StorageDataSource):
         _data = self.read(
             file_format=self.file_format, path=self.path_data, **self.storage_options
         )
-        _metadata = self.read(
-            file_format=self.file_format, path=self.path_meta, **self.storage_options
-        )
-        _data.attrs = _metadata.to_dict()["value"]
         return _data

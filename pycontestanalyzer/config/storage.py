@@ -8,6 +8,7 @@ class StoragePathsSettings(BaseSettings):
 
     raw_data: str
     raw_metadata: str
+    raw_rbn: str
     temporary: str
 
 
@@ -16,6 +17,7 @@ class StorageSettings(BaseSettings):
 
     partitions: str
     prefix: str
+    partitions_rbn: str
 
     @property
     def paths(self):
@@ -31,6 +33,7 @@ class StorageSettings(BaseSettings):
         return StoragePathsSettings(
             raw_data=(f"{self.prefix}/{self.partitions}/raw_data"),
             raw_metadata=(f"{self.prefix}/{self.partitions}/raw_metadata"),
+            raw_rbn=(f"{self.prefix}/{self.partitions_rbn}/rbn"),
             temporary=f"{self.prefix}/temporary",
         )
 

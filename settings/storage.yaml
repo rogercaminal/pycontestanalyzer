@@ -4,3 +4,4 @@ default:
   storage:
     prefix: "@jinja {{env['PYCONTESTANALYZERSTORAGE'] | default(env['HOME'])}}/contest_data"
     partitions: "contest={contest}/mode={mode}/year={year}/callsign={callsign}"
+    partitions_rbn: "contest={contest}/mode={mode}/year={year}"

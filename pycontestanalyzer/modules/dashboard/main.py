@@ -4,7 +4,6 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
-from pandas import read_parquet
 
 # from pycontestanalyzer.modules.dashboard.layout import get_layout
 from pycontestanalyzer.modules.download.main import exists, main as _main_download
@@ -14,8 +13,8 @@ from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
 from pycontestanalyzer.plots.common.plot_rate import PlotRate
 from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
 from pycontestanalyzer.utils import CONTINENTS
+from pycontestanalyzer.utils.downloads.logs import get_all_options
 
-HISTORY_CQWW = read_parquet("pycontestanalyzer/data/cqww/history.parquet")
 YEAR_MIN = 2020
 
 
@@ -38,7 +37,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 options=[
                     {"label": "CQ WW DX", "value": "cqww"},
                 ],
-                value="cqww",
+                value=None,
             )
         ],
         style={"width": "25%", "display": "inline-block"},
@@ -52,7 +51,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     {"label": "CW", "value": "cw"},
                     {"label": "SSB", "value": "ssb"},
                 ],
-                value="cw",
+                value=None,
             )
         ],
         style={"width": "25%", "display": "inline-block"},
@@ -61,12 +60,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
     dropdown_year_call = html.Div(
         dcc.Dropdown(
             id="callsigns_years",
-            options=[
-                {"label": f"{y} - {c}", "value": f"{c},{y}"}
-                for y, c in HISTORY_CQWW.query("(mode=='cw')")[
-                    ["year", "callsign"]
-                ].to_numpy()
-            ],
+            options=[],
             multi=True,
             value=None,
         ),
@@ -140,6 +134,20 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             ),
         ]
     )
+
+    @app.callback(
+        Output("callsigns_years", "options"),
+        [Input("contest", "value"), Input("mode", "value")],
+    )
+    def load_available_calls_years(contest, mode):
+        if not contest or not mode:
+            return []
+        data = get_all_options(contest=contest.lower()).query(f"(mode == '{mode}')")
+        options = [
+            {"label": f"{y} - {c}", "value": f"{c},{y}"}
+            for y, c in data[["year", "callsign"]].to_numpy()
+        ]
+        return options
 
     @app.callback(
         Output("download", "children"),

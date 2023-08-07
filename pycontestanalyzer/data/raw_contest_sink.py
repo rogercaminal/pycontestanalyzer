@@ -8,14 +8,14 @@ from pycontestanalyzer.data.storage_sink import StorageDataSink
 
 
 class RawCabrilloDataSink(StorageDataSink):
-    """Optimisation Multiplier Suggestions storage data sink definition."""
+    """Contest storage data sink definition."""
 
     file_format: ClassVar[str] = "parquet"
     path: ClassVar[Union[str, PathLike]] = "data.parquet"
 
 
 class RawCabrilloMetaDataSink(StorageDataSink):
-    """Optimisation Multiplier Suggestions storage meta data sink definition."""
+    """Contest storage meta data sink definition."""
 
     file_format: ClassVar[str] = "parquet"
     path: ClassVar[Union[str, PathLike]] = "data.parquet"
