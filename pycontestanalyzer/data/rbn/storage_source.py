@@ -22,7 +22,7 @@ class ReverseBeaconRawDataSource(StorageDataSource):
     dtypes: dict[str, str] = {
         "callsign": "str",
         "freq": "float",
-        "band": "str",
+        "band": "int",
         "dx": "str",
         "mode": "str",
         "db": "int",
@@ -92,10 +92,12 @@ class ReverseBeaconRawDataSource(StorageDataSource):
         data = (
             data.loc[:, self.dtypes.keys()]
             .dropna(subset=["dx"])
-            .astype(self.dtypes)
+            .query("band.str.contains('m')")
             .assign(
+                band=lambda x: x["band"].str.replace("m", "").astype(int),
                 datetime=lambda x: to_datetime(x["date"]),
             )
+            .astype(self.dtypes)
             .drop(columns=["date"])
         )
         return data

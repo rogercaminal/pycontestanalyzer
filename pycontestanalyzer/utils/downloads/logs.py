@@ -33,8 +33,8 @@ def _get_available_callsigns(
         list[str]: List of callsigns available
     """
     if contest == "cqww":
-        website_address = f"{RawCQWWCabrilloDataSource.prefix}/"
-        f"{year}{mode.lower().replace('ssb', 'ph')}"
+        mode_adapted = mode.lower().replace("ssb", "ph")
+        website_address = f"{RawCQWWCabrilloDataSource.prefix}{year}{mode_adapted}"
         html = _download_raw_data(website_address=website_address)
         raw_list = re.findall(r"href='(.+)\.log'", html)
     else:

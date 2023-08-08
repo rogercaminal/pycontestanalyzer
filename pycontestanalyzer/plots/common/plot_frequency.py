@@ -6,6 +6,7 @@ import plotly.offline as pyo
 from pandas import to_datetime, to_timedelta
 
 from pycontestanalyzer.plots.plot_base import PlotBase
+from pycontestanalyzer.utils import BANDMAP
 
 
 class PlotFrequency(PlotBase):
@@ -37,7 +38,7 @@ class PlotFrequency(PlotBase):
                 "frequency": "Frequency",
                 "band": "Band",
             },
-            category_orders={"band": [10, 15, 20, 40, 80, 160]},
+            category_orders={"band": list(BANDMAP.keys())},
         )
 
         fig.update_layout(hovermode="x unified")

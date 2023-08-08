@@ -6,12 +6,19 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 # from pycontestanalyzer.modules.dashboard.layout import get_layout
-from pycontestanalyzer.modules.download.main import exists, main as _main_download
+from pycontestanalyzer.modules.download.main import (
+    exists,
+    exists_rbn,
+    main as _main_download,
+)
 from pycontestanalyzer.plots.common.plot_frequency import PlotFrequency
 from pycontestanalyzer.plots.common.plot_qso_direction import PlotQsoDirection
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
 from pycontestanalyzer.plots.common.plot_rate import PlotRate
 from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
+from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
+from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
+from pycontestanalyzer.plots.rbn.plot_snr import PlotSnr
 from pycontestanalyzer.utils import CONTINENTS
 from pycontestanalyzer.utils.downloads.logs import get_all_options
 
@@ -132,6 +139,69 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     html.Div(dcc.Graph(id="qso_direction", figure=go.Figure())),
                 ]
             ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_band_conditions_time_bin",
+                            options=[5, 15, 30, 60],
+                            value=60,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_band_conditions_tx_continent",
+                            options=CONTINENTS,
+                            value="EU",
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(
+                        dcc.Checklist(
+                            id="cl_band_conditions_rx_continent",
+                            options=CONTINENTS,
+                            value=CONTINENTS,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(dcc.Graph(id="band_conditions", figure=go.Figure())),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_cw_speed_time_bin",
+                            options=[5, 15, 30, 60],
+                            value=60,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(dcc.Graph(id="cw_speed", figure=go.Figure())),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_snr_time_bin",
+                            options=[5, 15, 30, 60],
+                            value=60,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(
+                        dcc.Checklist(
+                            id="cl_snr_rx_continent",
+                            options=CONTINENTS,
+                            value=CONTINENTS,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(dcc.Graph(id="snr", figure=go.Figure())),
+                ]
+            ),
         ]
     )
 
@@ -143,6 +213,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         if not contest or not mode:
             return []
         data = get_all_options(contest=contest.lower()).query(f"(mode == '{mode}')")
+        print(data)
         options = [
             {"label": f"{y} - {c}", "value": f"{c},{y}"}
             for y, c in data[["year", "callsign"]].to_numpy()
@@ -299,6 +370,108 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 mode=mode,
                 callsigns_years=f_callsigns_years,
                 contest_hours=contest_hours,
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("band_conditions", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_band_conditions_time_bin", "value"),
+            Input("rb_band_conditions_tx_continent", "value"),
+            Input("cl_band_conditions_rx_continent", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_band_conditions(
+        n_clicks,
+        time_bin_size,
+        tx_continent,
+        rx_continents,
+        contest,
+        mode,
+        callsigns_years,
+    ):
+        years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                year = int(callsign_year.split(",")[1])
+                years.append(year)
+                if not exists_rbn(year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotBandConditions(
+                contest=contest,
+                mode=mode,
+                years=years,
+                time_bin_size=time_bin_size,
+                tx_continent=tx_continent,
+                rx_continents=rx_continents,
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("cw_speed", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_cw_speed_time_bin", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_cw_speed(n_clicks, time_bin_size, contest, mode, callsigns_years):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists_rbn(year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotCwSpeed(
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                time_bin_size=time_bin_size,
+            ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("snr", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_snr_time_bin", "value"),
+            Input("cl_snr_rx_continent", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_snr(
+        n_clicks, time_bin_size, rx_continents, contest, mode, callsigns_years
+    ):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists_rbn(year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            return PlotSnr(
+                contest=contest,
+                mode=mode,
+                callsigns_years=f_callsigns_years,
+                time_bin_size=time_bin_size,
+                rx_continents=rx_continents,
             ).plot()
         return go.Figure()
 
