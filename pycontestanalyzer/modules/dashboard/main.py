@@ -74,7 +74,6 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         style={"width": "25%", "display": "inline-block"},
     )
 
-    # app.layout = get_layout()
     app.layout = html.Div(
         [
             radio_contest,

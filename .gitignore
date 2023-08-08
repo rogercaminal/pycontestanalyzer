@@ -4,3 +4,4 @@ pycontestanalyzer.egg-info/
 .python-version
 .env
 .vscode/
+*.html
