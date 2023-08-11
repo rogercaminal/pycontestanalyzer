@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.offline as pyo
 from pandas import Grouper, concat, to_datetime, to_timedelta
 
-from pycontestanalyzer.commons.pandas.dataframes import hour_of_contest
+from pycontestanalyzer.commons.pandas.general import hour_of_contest
 from pycontestanalyzer.plots.plot_rbn_base import PlotReverseBeaconBase
 from pycontestanalyzer.utils import BANDMAP
 
@@ -86,7 +86,7 @@ class PlotCwSpeed(PlotReverseBeaconBase):
                 "band": "Band",
             },
             category_orders={"band": list(BANDMAP.keys())},
-            range_y=[10.0, 50.0],
+            range_y=[10.0, _data["speed"].max() * 1.05],
         )
 
         fig.update_layout(hovermode="x unified")

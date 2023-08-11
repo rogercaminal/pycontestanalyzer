@@ -28,7 +28,7 @@ class PlotBase(ABC):
         for callsign, year in self.callsigns_years:
             data_filtered = (
                 ProcessedContestDataSource(
-                    callsign=callsign,
+                    callsign=callsign.lower(),
                     contest=self.contest,
                     year=year,
                     mode=self.mode,

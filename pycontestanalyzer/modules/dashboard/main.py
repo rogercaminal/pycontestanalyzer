@@ -16,8 +16,13 @@ from pycontestanalyzer.plots.common.plot_qso_direction import PlotQsoDirection
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
 from pycontestanalyzer.plots.common.plot_rate import PlotRate
 from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
+from pycontestanalyzer.plots.cqww.plot_cqww_evolution import (
+    AVAILABLE_FEATURES as AVAILABLE_FEATURES_CQWW,
+    PlotCqWwEvolution,
+)
 from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
+from pycontestanalyzer.plots.rbn.plot_number_rbn_spots import PlotNumberRbnSpots
 from pycontestanalyzer.plots.rbn.plot_snr import PlotSnr
 from pycontestanalyzer.utils import CONTINENTS
 from pycontestanalyzer.utils.downloads.logs import get_all_options
@@ -106,6 +111,17 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 [
                     html.Div(
                         dcc.RadioItems(
+                            id="rb_qso_rate_type",
+                            options=[
+                                {"label": "Per hour", "value": "hour"},
+                                {"label": "Rolling", "value": "rolling"},
+                            ],
+                            value="hour",
+                            inline=True,
+                        )
+                    ),
+                    html.Div(
+                        dcc.RadioItems(
                             id="rb_qso_rate_time_bin",
                             options=[5, 15, 30, 60],
                             value=60,
@@ -113,19 +129,6 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                         )
                     ),
                     html.Div(dcc.Graph(id="qso_rate", figure=go.Figure())),
-                ]
-            ),
-            html.Div(
-                [
-                    html.Div(
-                        dcc.RadioItems(
-                            id="rb_qso_rolling_rate_time_bin",
-                            options=[5, 15, 30, 60],
-                            value=60,
-                            inline=True,
-                        )
-                    ),
-                    html.Div(dcc.Graph(id="qso_rolling_rate", figure=go.Figure())),
                 ]
             ),
             html.Div(
@@ -171,20 +174,19 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 [
                     html.Div(
                         dcc.RadioItems(
-                            id="rb_cw_speed_time_bin",
-                            options=[5, 15, 30, 60],
-                            value=60,
+                            id="rb_rbn_feature",
+                            options=[
+                                {"label": "Counts", "value": "counts"},
+                                {"label": "CW speed", "value": "speed"},
+                                {"label": "SNR (dB)", "value": "snr"},
+                            ],
+                            value="counts",
                             inline=True,
                         ),
                     ),
-                    html.Div(dcc.Graph(id="cw_speed", figure=go.Figure())),
-                ]
-            ),
-            html.Div(
-                [
                     html.Div(
                         dcc.RadioItems(
-                            id="rb_snr_time_bin",
+                            id="rb_rbn_time_bin",
                             options=[5, 15, 30, 60],
                             value=60,
                             inline=True,
@@ -192,13 +194,31 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     ),
                     html.Div(
                         dcc.Checklist(
-                            id="cl_snr_rx_continent",
+                            id="cl_rbn_rx_continent",
                             options=CONTINENTS,
                             value=CONTINENTS,
                             inline=True,
                         ),
                     ),
-                    html.Div(dcc.Graph(id="snr", figure=go.Figure())),
+                    html.Div(dcc.Graph(id="rbn_stats", figure=go.Figure())),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_contest_evolution_feature",
+                            options=[
+                                {"label": v[1], "value": k}
+                                for k, v in AVAILABLE_FEATURES_CQWW.items()
+                            ],
+                            value=None,
+                            inline=False,
+                        ),
+                    ),
+                    html.Div(
+                        dcc.Graph(id="contest_evolution_feature", figure=go.Figure())
+                    ),
                 ]
             ),
         ]
@@ -290,35 +310,10 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
 
     @app.callback(
         Output("qso_rate", "figure"),
-        [Input("submit-button", "n_clicks"), Input("rb_qso_rate_time_bin", "value")],
-        [
-            State("contest", "value"),
-            State("mode", "value"),
-            State("callsigns_years", "value"),
-        ],
-    )
-    def plot_qso_rate(n_clicks, time_bin, contest, mode, callsigns_years):
-        f_callsigns_years = []
-        if n_clicks > 0:
-            for callsign_year in callsigns_years:
-                callsign = callsign_year.split(",")[0]
-                year = int(callsign_year.split(",")[1])
-                f_callsigns_years.append((callsign, year))
-                if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
-                    raise dash.exceptions.PreventUpdate
-            return PlotRate(
-                contest=contest,
-                mode=mode,
-                callsigns_years=f_callsigns_years,
-                time_bin_size=time_bin,
-            ).plot()
-        return go.Figure()
-
-    @app.callback(
-        Output("qso_rolling_rate", "figure"),
         [
             Input("submit-button", "n_clicks"),
-            Input("rb_qso_rolling_rate_time_bin", "value"),
+            Input("rb_qso_rate_type", "value"),
+            Input("rb_qso_rate_time_bin", "value"),
         ],
         [
             State("contest", "value"),
@@ -326,7 +321,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             State("callsigns_years", "value"),
         ],
     )
-    def plot_qso_rolling_rate(n_clicks, time_bin, contest, mode, callsigns_years):
+    def plot_qso_rate(n_clicks, plot_type, time_bin, contest, mode, callsigns_years):
         f_callsigns_years = []
         if n_clicks > 0:
             for callsign_year in callsigns_years:
@@ -335,12 +330,22 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 f_callsigns_years.append((callsign, year))
                 if not exists(callsign=callsign, year=year, contest=contest, mode=mode):
                     raise dash.exceptions.PreventUpdate
-            return PlotRollingRate(
-                contest=contest,
-                mode=mode,
-                callsigns_years=f_callsigns_years,
-                time_bin_size=time_bin,
-            ).plot()
+            if plot_type == "hour":
+                return PlotRate(
+                    contest=contest,
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin,
+                ).plot()
+            elif plot_type == "rolling":
+                return PlotRollingRate(
+                    contest=contest,
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin,
+                ).plot()
+            else:
+                raise ValueError("plot_type must be either 'hour' or 'rolling'")
         return go.Figure()
 
     @app.callback(
@@ -413,10 +418,12 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         return go.Figure()
 
     @app.callback(
-        Output("cw_speed", "figure"),
+        Output("rbn_stats", "figure"),
         [
             Input("submit-button", "n_clicks"),
-            Input("rb_cw_speed_time_bin", "value"),
+            Input("rb_rbn_feature", "value"),
+            Input("rb_rbn_time_bin", "value"),
+            Input("cl_rbn_rx_continent", "value"),
         ],
         [
             State("contest", "value"),
@@ -424,38 +431,8 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             State("callsigns_years", "value"),
         ],
     )
-    def plot_cw_speed(n_clicks, time_bin_size, contest, mode, callsigns_years):
-        f_callsigns_years = []
-        if n_clicks > 0:
-            for callsign_year in callsigns_years:
-                callsign = callsign_year.split(",")[0]
-                year = int(callsign_year.split(",")[1])
-                f_callsigns_years.append((callsign, year))
-                if not exists_rbn(year=year, contest=contest, mode=mode):
-                    raise dash.exceptions.PreventUpdate
-            return PlotCwSpeed(
-                contest=contest,
-                mode=mode,
-                callsigns_years=f_callsigns_years,
-                time_bin_size=time_bin_size,
-            ).plot()
-        return go.Figure()
-
-    @app.callback(
-        Output("snr", "figure"),
-        [
-            Input("submit-button", "n_clicks"),
-            Input("rb_snr_time_bin", "value"),
-            Input("cl_snr_rx_continent", "value"),
-        ],
-        [
-            State("contest", "value"),
-            State("mode", "value"),
-            State("callsigns_years", "value"),
-        ],
-    )
-    def plot_snr(
-        n_clicks, time_bin_size, rx_continents, contest, mode, callsigns_years
+    def plot_rbn_stats(
+        n_clicks, feature, time_bin_size, rx_continents, contest, mode, callsigns_years
     ):
         f_callsigns_years = []
         if n_clicks > 0:
@@ -465,13 +442,60 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 f_callsigns_years.append((callsign, year))
                 if not exists_rbn(year=year, contest=contest, mode=mode):
                     raise dash.exceptions.PreventUpdate
-            return PlotSnr(
-                contest=contest,
-                mode=mode,
-                callsigns_years=f_callsigns_years,
-                time_bin_size=time_bin_size,
-                rx_continents=rx_continents,
-            ).plot()
+            if feature == "speed":
+                return PlotCwSpeed(
+                    contest=contest,
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin_size,
+                ).plot()
+            elif feature == "snr":
+                return PlotSnr(
+                    contest=contest,
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin_size,
+                    rx_continents=rx_continents,
+                ).plot()
+            elif feature == "counts":
+                return PlotNumberRbnSpots(
+                    contest=contest,
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin_size,
+                    rx_continents=rx_continents,
+                ).plot()
+        return go.Figure()
+
+    @app.callback(
+        Output("contest_evolution_feature", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_contest_evolution_feature", "value"),
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_contest_evolution_feature(
+        n_clicks, feature, contest, mode, callsigns_years
+    ):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists_rbn(year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            if contest == "cqww":
+                return PlotCqWwEvolution(
+                    mode=mode, callsigns_years=f_callsigns_years, feature=feature
+                ).plot()
+            else:
+                raise ValueError("Contest not known")
         return go.Figure()
 
     app.run(debug=debug, host="0.0.0.0", port=8050)

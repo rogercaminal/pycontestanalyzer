@@ -10,7 +10,7 @@ from pycontestanalyzer.plots.plot_rbn_base import PlotReverseBeaconBase
 from pycontestanalyzer.utils import BANDMAP
 
 
-class PlotSnr(PlotReverseBeaconBase):
+class PlotNumberRbnSpots(PlotReverseBeaconBase):
     """Plot SNR from RBN."""
 
     def __init__(
@@ -74,29 +74,30 @@ class PlotSnr(PlotReverseBeaconBase):
                 ],
                 as_index=False,
             )
-            .agg(db=("db", "mean"))
+            .agg(db=("db", "count"))
+            .rename(columns={"db": "counts"})
         )
 
         fig = px.scatter(
             _data,
             x="dummy_datetime",
-            y="db",
+            y="counts",
             color="callsign_year",
             facet_row="band",
             labels={
                 "callsign_year": "Callsign (year)",
                 "dummy_datetime": "Dummy contest datetime",
-                "dB": "SNR (dB)",
+                "counts": "# RBN spots",
                 "band": "Band",
             },
             category_orders={"band": list(BANDMAP.keys())},
-            range_y=[0.0, _data["db"].max() * 1.05],
+            range_y=[0.0, _data["counts"].max() * 1.05],
         )
 
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Dummy contest datetime")
-        fig.update_yaxes(title="SNR (dB)", matches=None)
+        fig.update_yaxes(title="# RBN spots", matches=None)
 
         if not save:
             return fig
-        pyo.plot(fig, filename="cw_snr.html")
+        pyo.plot(fig, filename="cw_rbn_spots.html")

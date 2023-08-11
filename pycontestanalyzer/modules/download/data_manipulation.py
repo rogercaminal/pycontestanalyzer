@@ -3,7 +3,8 @@ import logging
 
 from pandas import DataFrame
 
-from pycontestanalyzer.commons.pandas.dataframes import (
+from pycontestanalyzer.commons.pandas.cqww import add_qso_points
+from pycontestanalyzer.commons.pandas.general import (
     add_dxcc_info,
     compute_band,
     hour_of_contest,
@@ -32,6 +33,9 @@ def data_manipulation(data: DataFrame) -> DataFrame:
         )
         .pipe(
             func=hour_of_contest,
+        )
+        .pipe(
+            func=add_qso_points,
         )
     )
 

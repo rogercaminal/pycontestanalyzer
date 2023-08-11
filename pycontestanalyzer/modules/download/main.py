@@ -88,11 +88,11 @@ def main(
 
                 # Store data
                 prefix_raw_storage_data = settings.storage.paths.raw_data.format(
-                    contest=contest, mode=mode, year=year, callsign=callsign
+                    contest=contest, mode=mode, year=year, callsign=callsign.lower()
                 )
                 prefix_raw_storage_metadata = (
                     settings.storage.paths.raw_metadata.format(
-                        contest=contest, mode=mode, year=year, callsign=callsign
+                        contest=contest, mode=mode, year=year, callsign=callsign.lower()
                     )
                 )
                 logger.info(f"Store data in {prefix_raw_storage_data}")
