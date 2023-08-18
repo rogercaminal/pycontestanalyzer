@@ -34,22 +34,24 @@ class ReverseBeaconRawDataSource(StorageDataSource):
 
     def __init__(
         self,
-        contest: str,
         year: int,
         mode: str,
+        contest: str | None = None,
+        dates: list[date] | None = None
     ):
         """Raw contest cabrillo data source constructor.
 
         Args:
-            contest: string with the name of the contest
+            contest: string with the name of the contest. If None, download dates.
             year: integer with the year of the contest
             mode: string with the mode of the contest
+            dates: if contest is None, dates to consider for custom downloads
         """
         super().__init__(prefix=self.prefix)
         self.contest = contest
         self.mode = mode
         self.year = year
-        self.dates: list[date] = self._get_dates_contest()
+        self.dates: list[date] = dates if contest is None else self._get_dates_contest()
 
     def load(self) -> DataFrame:
         """Load data from storage.

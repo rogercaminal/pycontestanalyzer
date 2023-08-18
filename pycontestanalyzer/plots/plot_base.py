@@ -34,7 +34,7 @@ class PlotBase(ABC):
                     mode=self.mode,
                 )
                 .load()
-                .assign(year=year)
+                .assign(year=int(year))
                 .assign(contest=self.contest)
             )
             data.append(data_filtered)
