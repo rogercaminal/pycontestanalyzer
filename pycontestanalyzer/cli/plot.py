@@ -17,9 +17,10 @@ from pycontestanalyzer.plots.rbn.plot_snr import PlotSnr
 app = Typer(name="plot", add_completion=False)
 logger = getLogger(__name__)
 
+
 @app.command()
 def frequency(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -29,8 +30,8 @@ def frequency(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
 ):
@@ -41,7 +42,7 @@ def frequency(
 
 @app.command()
 def qso_direction(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -51,31 +52,29 @@ def qso_direction(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     contest_hours: list[float] = Option(
-       [0, 23],
+        [0, 23],
         "--contest_hours",
-        help=(
-            "Range of contest hours to consider. Defaults to [0, 23]"
-        ),
+        help=("Range of contest hours to consider. Defaults to [0, 23]"),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotQsoDirection(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
-        contest_hours=contest_hours
+        contest_hours=contest_hours,
     )
     plot.plot(save=True)
 
 
 @app.command()
 def qsos_hour(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -85,23 +84,19 @@ def qsos_hour(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
-    plot = PlotQsosHour(
-        contest=contest, 
-        mode=mode, 
-        callsigns_years=callsigns_years
-    )
+    plot = PlotQsosHour(contest=contest, mode=mode, callsigns_years=callsigns_years)
     plot.plot(save=True)
 
 
 @app.command()
 def rate(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -111,15 +106,15 @@ def rate(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotRate(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
         time_bin_size=60,
     )
@@ -128,7 +123,7 @@ def rate(
 
 @app.command()
 def rolling_rate(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -138,15 +133,15 @@ def rolling_rate(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotRollingRate(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
         time_bin_size=60,
     )
@@ -164,30 +159,26 @@ def cqww_evolution(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     feature: str = Option(
-       ...,
+        ...,
         "--feature",
-        help=(
-            "Feature to plot"
-        ),
+        help=("Feature to plot"),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotCqWwEvolution(
-        mode=mode, 
-        callsigns_years=callsigns_years,
-        feature=feature
+        mode=mode, callsigns_years=callsigns_years, feature=feature
     )
     plot.plot(save=True)
 
 
 @app.command()
 def band_conditions(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -197,47 +188,41 @@ def band_conditions(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     time_bin_size: int = Option(
-       60,
+        60,
         "--time_bin_size",
-        help=(
-            "Size of the time bins, default: 60"
-        ),
+        help=("Size of the time bins, default: 60"),
     ),
     tx_continent: str = Option(
-       ...,
+        ...,
         "--tx_continent",
-        help=(
-            "Continent of the TX"
-        ),
+        help=("Continent of the TX"),
     ),
     rx_continents: list[str] = Option(
-       ["EU", "NA", "AS", "SA", "OC"],
+        ["EU", "NA", "AS", "SA", "OC"],
         "--rx_continents",
-        help=(
-            "Continents to consider for RX"
-        ),
+        help=("Continents to consider for RX"),
     ),
 ):
     years = [pair.split(",")[1] for pair in callsigns_years]
     plot = PlotBandConditions(
-        contest=contest, 
+        contest=contest,
         mode=mode,
         years=years,
-        time_bin_size=time_bin_size, 
-        tx_continent=tx_continent, 
-        rx_continents=rx_continents
+        time_bin_size=time_bin_size,
+        tx_continent=tx_continent,
+        rx_continents=rx_continents,
     )
     plot.plot(save=True)
 
 
 @app.command()
 def cw_speed(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -247,31 +232,29 @@ def cw_speed(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     time_bin_size: int = Option(
-       60,
+        60,
         "--time_bin_size",
-        help=(
-            "Size of the time bins, default: 60"
-        ),
+        help=("Size of the time bins, default: 60"),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotCwSpeed(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
-        time_bin_size=time_bin_size
+        time_bin_size=time_bin_size,
     )
     plot.plot(save=True)
 
 
 @app.command()
 def number_rbn_spots(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -281,39 +264,35 @@ def number_rbn_spots(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     time_bin_size: int = Option(
-       60,
+        60,
         "--time_bin_size",
-        help=(
-            "Size of the time bins, default: 60"
-        ),
+        help=("Size of the time bins, default: 60"),
     ),
     rx_continents: list[str] = Option(
-       ["EU", "NA", "AS", "SA", "OC"],
+        ["EU", "NA", "AS", "SA", "OC"],
         "--rx_continents",
-        help=(
-            "Continents to consider for RX"
-        ),
+        help=("Continents to consider for RX"),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotNumberRbnSpots(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
-        time_bin_size=time_bin_size, 
-        rx_continents=rx_continents
+        time_bin_size=time_bin_size,
+        rx_continents=rx_continents,
     )
     plot.plot(save=True)
 
 
 @app.command()
 def snr(
-    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."), 
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
         ...,
         "--mode",
@@ -323,31 +302,27 @@ def snr(
         ...,
         "--callsigns_years",
         help=(
-            "callsign,year to be considered. Can be specified multiple times for multiple "
-            "callsigns and year pairs."
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
         ),
     ),
     time_bin_size: int = Option(
-       60,
+        60,
         "--time_bin_size",
-        help=(
-            "Size of the time bins, default: 60"
-        ),
+        help=("Size of the time bins, default: 60"),
     ),
     rx_continents: list[str] = Option(
-       ["EU", "NA", "AS", "SA", "OC"],
+        ["EU", "NA", "AS", "SA", "OC"],
         "--rx_continents",
-        help=(
-            "Continents to consider for RX"
-        ),
+        help=("Continents to consider for RX"),
     ),
 ):
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotSnr(
-        contest=contest, 
-        mode=mode, 
+        contest=contest,
+        mode=mode,
         callsigns_years=callsigns_years,
-        time_bin_size=time_bin_size, 
-        rx_continents=rx_continents
+        time_bin_size=time_bin_size,
+        rx_continents=rx_continents,
     )
     plot.plot(save=True)

@@ -34,13 +34,9 @@ class RawContestCabrilloDataSource(StorageDataSource):
         the parent class StorageDataSource constructor.
 
         Args:
-            geographic_granularity: string or list of strings with geographic
-                granularities to load. Defaults to None to load all data available.
-            prediction_model: string or list of strings with name of the prediction
-                model(s) to load. Defaults to None to load all data available.
-            prefix: string with prefix to prepend the data source's path. Passed down
-                to the parent StorageDataSource constructor. Defaults to None to avoid
-                prepending.
+            callsign (str): Callsign to consider
+            year (int): Year of the contest
+            mode (str): Mode of the contest
         """
         self.path = self.path.format(
             callsign=callsign.lower(), year=year, mode=mode.lower()
@@ -77,7 +73,11 @@ class RawContestCabrilloDataSource(StorageDataSource):
         _df = read_method(StringIO(csv), **kwargs)
 
         # metadata
-        meta = [l for l in html.decode("unicode_escape").split("\n") if "QSO:" not in l]
+        meta = [
+            line
+            for line in html.decode("unicode_escape").split("\n")
+            if "QSO:" not in line
+        ]
         for m in meta:
             try:
                 k, v = m.split(": ")

@@ -40,13 +40,9 @@ class RawCQWPXCabrilloDataSource(RawContestCabrilloDataSource):
         the parent class StorageDataSource constructor.
 
         Args:
-            geographic_granularity: string or list of strings with geographic
-                granularities to load. Defaults to None to load all data available.
-            prediction_model: string or list of strings with name of the prediction
-                model(s) to load. Defaults to None to load all data available.
-            prefix: string with prefix to prepend the data source's path. Passed down
-                to the parent StorageDataSource constructor. Defaults to None to avoid
-                prepending.
+            callsign (str): Callsign to consider
+            year (int): Year of the contest
+            mode (str): Mode of the contest
         """
         super().__init__(callsign=callsign, year=year, mode=mode)
 

@@ -37,7 +37,7 @@ class ReverseBeaconRawDataSource(StorageDataSource):
         year: int,
         mode: str,
         contest: str | None = None,
-        dates: list[date] | None = None
+        dates: list[date] | None = None,
     ):
         """Raw contest cabrillo data source constructor.
 
