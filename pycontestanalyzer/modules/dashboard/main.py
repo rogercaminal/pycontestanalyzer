@@ -20,6 +20,7 @@ from pycontestanalyzer.plots.cqww.plot_cqww_evolution import (
     AVAILABLE_FEATURES as AVAILABLE_FEATURES_CQWW,
     PlotCqWwEvolution,
 )
+from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import PlotMinutesPreviousCall
 from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
 from pycontestanalyzer.plots.rbn.plot_number_rbn_spots import PlotNumberRbnSpots
@@ -103,6 +104,14 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                             inline=True,
                         )
                     ),
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_qsos_hour_time_bin",
+                            options=[15, 30, 60],
+                            value=60,
+                            inline=True,
+                        )
+                    ),
                     html.Div(dcc.Graph(id="qsos_hour", figure=go.Figure())),
                 ]
             ),
@@ -153,7 +162,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     ),
                     html.Div(
                         dcc.RadioItems(
-                            id="rb_band_conditions_tx_continent",
+                            id="rb_band_conditions_reference",
                             options=CONTINENTS,
                             value="EU",
                             inline=True,
@@ -161,7 +170,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     ),
                     html.Div(
                         dcc.Checklist(
-                            id="cl_band_conditions_rx_continent",
+                            id="cl_band_conditions_continent",
                             options=CONTINENTS,
                             value=CONTINENTS,
                             inline=True,
@@ -212,12 +221,35 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                                 {"label": v[1], "value": k}
                                 for k, v in AVAILABLE_FEATURES_CQWW.items()
                             ],
-                            value=None,
+                            value="valid_qsos",
                             inline=False,
                         ),
                     ),
                     html.Div(
+                        dcc.RadioItems(
+                            id="rb_contest_evolution_time_bin",
+                            options=[1, 5, 15, 30, 60],
+                            value=1,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(
                         dcc.Graph(id="contest_evolution_feature", figure=go.Figure())
+                    ),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        dcc.RadioItems(
+                            id="rb_previous_call_time_bin",
+                            options=[1, 5, 15, 30, 60],
+                            value=1,
+                            inline=True,
+                        ),
+                    ),
+                    html.Div(
+                        dcc.Graph(id="minutes_previous_call", figure=go.Figure())
                     ),
                 ]
             ),
@@ -261,14 +293,18 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
 
     @app.callback(
         Output("qsos_hour", "figure"),
-        [Input("submit-button", "n_clicks"), Input("cl_qsos_hour_continent", "value")],
+        [
+            Input("submit-button", "n_clicks"), 
+            Input("cl_qsos_hour_continent", "value"),
+            Input("rb_qsos_hour_time_bin", "value")
+        ],
         [
             State("contest", "value"),
             State("mode", "value"),
             State("callsigns_years", "value"),
         ],
     )
-    def plot_qsos_hour(n_clicks, continents, contest, mode, callsigns_years):
+    def plot_qsos_hour(n_clicks, continents, time_bin_size, contest, mode, callsigns_years):
         f_callsigns_years = []
         if n_clicks > 0:
             for callsign_year in callsigns_years:
@@ -282,6 +318,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 mode=mode,
                 callsigns_years=f_callsigns_years,
                 continents=continents,
+                time_bin_size=time_bin_size
             ).plot()
         return go.Figure()
 
@@ -382,8 +419,8 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         [
             Input("submit-button", "n_clicks"),
             Input("rb_band_conditions_time_bin", "value"),
-            Input("rb_band_conditions_tx_continent", "value"),
-            Input("cl_band_conditions_rx_continent", "value"),
+            Input("rb_band_conditions_reference", "value"),
+            Input("cl_band_conditions_continent", "value"),
         ],
         [
             State("contest", "value"),
@@ -394,8 +431,8 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
     def plot_band_conditions(
         n_clicks,
         time_bin_size,
-        tx_continent,
-        rx_continents,
+        reference,
+        continents,
         contest,
         mode,
         callsigns_years,
@@ -412,8 +449,8 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 mode=mode,
                 years=years,
                 time_bin_size=time_bin_size,
-                tx_continent=tx_continent,
-                rx_continents=rx_continents,
+                reference=reference,
+                continents=continents,
             ).plot()
         return go.Figure()
 
@@ -472,6 +509,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         [
             Input("submit-button", "n_clicks"),
             Input("rb_contest_evolution_feature", "value"),
+            Input("rb_contest_evolution_time_bin", "value")
         ],
         [
             State("contest", "value"),
@@ -480,7 +518,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         ],
     )
     def plot_contest_evolution_feature(
-        n_clicks, feature, contest, mode, callsigns_years
+        n_clicks, feature, time_bin_size, contest, mode, callsigns_years
     ):
         f_callsigns_years = []
         if n_clicks > 0:
@@ -492,7 +530,38 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     raise dash.exceptions.PreventUpdate
             if contest == "cqww":
                 return PlotCqWwEvolution(
-                    mode=mode, callsigns_years=f_callsigns_years, feature=feature
+                    mode=mode, callsigns_years=f_callsigns_years, feature=feature, time_bin_size=time_bin_size
+                ).plot()
+            else:
+                raise ValueError("Contest not known")
+        return go.Figure()
+    
+    @app.callback(
+        Output("minutes_previous_call", "figure"),
+        [
+            Input("submit-button", "n_clicks"),
+            Input("rb_previous_call_time_bin", "value")
+        ],
+        [
+            State("contest", "value"),
+            State("mode", "value"),
+            State("callsigns_years", "value"),
+        ],
+    )
+    def plot_minutes_from_previous_call(
+        n_clicks, time_bin_size, contest, mode, callsigns_years
+    ):
+        f_callsigns_years = []
+        if n_clicks > 0:
+            for callsign_year in callsigns_years:
+                callsign = callsign_year.split(",")[0]
+                year = int(callsign_year.split(",")[1])
+                f_callsigns_years.append((callsign, year))
+                if not exists_rbn(year=year, contest=contest, mode=mode):
+                    raise dash.exceptions.PreventUpdate
+            if contest == "cqww":
+                return PlotMinutesPreviousCall(
+                    mode=mode, callsigns_years=f_callsigns_years, time_bin_size=time_bin_size
                 ).plot()
             else:
                 raise ValueError("Contest not known")

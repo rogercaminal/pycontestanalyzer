@@ -80,11 +80,27 @@ def add_qso_points(data: pd.DataFrame) -> pd.DataFrame:
         )
     )
 
-    data = data.join(
-        data.query("is_valid")
-        .groupby(["call"])["datetime"]
-        .transform(lambda x: x.diff(-1).dt.seconds / 60.0)
-        .rename("minutes_until_next_call")
+    data = (
+        data
+        .join(
+            data.query("is_valid")
+            .groupby(["call"])["datetime"]
+            .transform(
+                lambda x: x.diff(1).dt.days * 24 * 60 + x.diff(1).dt.seconds / 60.0
+            )
+            .rename("minutes_from_previous_call")
+        )
+        .join(
+            data.query("is_valid")
+            .groupby(["call"])["band"]
+            .transform(
+                lambda x: x.shift(1)
+            )
+            .rename("band_from_previous_call")
+        )
+        .assign(
+            band_transition_from_previous_call=lambda x: x["band_from_previous_call"].fillna(-1).astype(int).astype(str) + " \u2192 " + x["band"].astype(str)
+        )
     )
 
     return data

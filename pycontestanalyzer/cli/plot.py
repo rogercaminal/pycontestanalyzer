@@ -8,6 +8,7 @@ from pycontestanalyzer.plots.common.plot_qso_direction import PlotQsoDirection
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
 from pycontestanalyzer.plots.common.plot_rate import PlotRate
 from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
+from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import PlotMinutesPreviousCall
 from pycontestanalyzer.plots.cqww.plot_cqww_evolution import PlotCqWwEvolution
 from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
@@ -177,6 +178,34 @@ def cqww_evolution(
 
 
 @app.command()
+def cqww_minutes_from_previous_call(
+    mode: str = Option(
+        ...,
+        "--mode",
+        help="mode of the contest. Only available options: cw, " "ssb, rrty, mixed.",
+    ),
+    callsigns_years: list[str] = Option(
+        ...,
+        "--callsigns_years",
+        help=(
+            "callsign,year to be considered. Can be specified multiple times for "
+            "multiple callsigns and year pairs."
+        ),
+    ),
+    time_bin_size: int = Option(
+        5,
+        "--time_bin_size",
+        help=("Size of the time bins, default: 15"),
+    ),
+):
+    callsigns_years = [pair.split(",") for pair in callsigns_years]
+    plot = PlotMinutesPreviousCall(
+        mode=mode, callsigns_years=callsigns_years, time_bin_size=time_bin_size
+    )
+    plot.plot(save=True)
+
+
+@app.command()
 def band_conditions(
     contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
     mode: str = Option(
@@ -197,15 +226,15 @@ def band_conditions(
         "--time_bin_size",
         help=("Size of the time bins, default: 60"),
     ),
-    tx_continent: str = Option(
+    reference: str = Option(
         ...,
-        "--tx_continent",
-        help=("Continent of the TX"),
+        "--reference",
+        help=("Reference continent"),
     ),
-    rx_continents: list[str] = Option(
+    continents: list[str] = Option(
         ["EU", "NA", "AS", "SA", "OC"],
-        "--rx_continents",
-        help=("Continents to consider for RX"),
+        "--continents",
+        help=("Continents to plot"),
     ),
 ):
     years = [pair.split(",")[1] for pair in callsigns_years]
@@ -214,8 +243,8 @@ def band_conditions(
         mode=mode,
         years=years,
         time_bin_size=time_bin_size,
-        tx_continent=tx_continent,
-        rx_continents=rx_continents,
+        reference=reference,
+        continents=continents,
     )
     plot.plot(save=True)
 

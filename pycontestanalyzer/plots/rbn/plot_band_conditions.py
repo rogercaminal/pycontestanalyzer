@@ -1,5 +1,7 @@
 """Plot QSO rate."""
 
+from numpy import where
+import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
 from pandas import Grouper
@@ -18,8 +20,8 @@ class PlotBandConditions(PlotReverseBeaconBase):
         mode: str,
         years: list[int],
         time_bin_size: int,
-        tx_continent: str,
-        rx_continents: list[str],
+        reference: str,
+        continents: list[str],
     ):
         """Init method of the PlotBandConditions class.
 
@@ -28,13 +30,13 @@ class PlotBandConditions(PlotReverseBeaconBase):
             mode (str): Mode of the contest
             years (list[int]): Years of the contest
             time_bin_size (int, optional): Time bin size in minutes.
-            tx_continent (str): Continent of the TX station
-            rx_continents (list[str]): Continents of the RX stations
+            reference (str): Reference continent
+            continents (list[str]): Continents to display
         """
         super().__init__(contest=contest, mode=mode, years=years)
         self.time_bin_size = time_bin_size
-        self.tx_continent = tx_continent
-        self.rx_continents = rx_continents
+        self.reference = reference
+        self.continents = continents
 
     def plot(self, save: bool = False) -> None | go.Figure:
         """Create plot.
@@ -45,13 +47,16 @@ class PlotBandConditions(PlotReverseBeaconBase):
         Returns:
             None | Figure: _description_
         """
+        bands = list(BANDMAP.keys())
         grp = (
-            self.data.query(f"(dx_cont == '{self.tx_continent.upper()}')")
-            .query(f"(de_cont.isin({self.rx_continents}))")
+            self.data
+            .query(f"(dx_cont == '{self.reference}') | (de_cont == '{self.reference}')")
+            .query(f"band.isin({bands})")
+            .assign(continent=lambda x: where(x["dx_cont"] == self.reference, x["de_cont"], x["dx_cont"]))
+            .query(f"continent.isin({self.continents})")
             .groupby(
                 [
-                    "de_cont",
-                    "dx_cont",
+                    "continent",
                     "band",
                     "year",
                     Grouper(key="datetime", freq=f"{self.time_bin_size}Min"),
@@ -61,41 +66,37 @@ class PlotBandConditions(PlotReverseBeaconBase):
             .agg(numerator=("freq", "count"))
             .assign(
                 denominator=lambda x: (
-                    x.groupby(["datetime", "year"])["numerator"].transform("sum")
+                    x.groupby(["band", "continent", "year"])["numerator"].transform("sum")
                 ),
-                ratio=lambda x: x["numerator"] / x["denominator"],
+                percent=lambda x: 100.* x["numerator"] / x["denominator"],
             )
         )
 
-        bands = list(BANDMAP.keys())
         fig = make_subplots(
             rows=3,
             cols=2,
-            subplot_titles=[
-                f"TX continent: {self.tx_continent} - Band: {b}m" for b in bands
-            ],
         )
-        for i, band in enumerate(bands):
-            _df = grp.query(f"band == {band}")
-            fig.add_trace(
-                go.Heatmap(
-                    x=_df["datetime"],
-                    y=_df["de_cont"],
-                    z=_df["ratio"],
-                    zmin=0,
-                    zmax=grp["ratio"].max(),
-                    name=f"{band}m",
-                    hovertemplate="Date: %{x} <br>"
-                    "Continent: %{y} <br>Rate of spots: %{z}",
-                ),
-                row=(i // 2) + 1,
-                col=(i % 2) + 1,
-            )
 
-        fig.update_layout(
-            hovermode="closest",
+        fig = px.line(
+            grp,
+            x="datetime",
+            y="percent",
+            color="continent",
+            facet_row="band",
+            labels={
+                "continent": "Continent",
+                "datetime": "Time",
+                "band": "Band",
+                "percent": "% spots"
+            },
+            category_orders={"band": list(BANDMAP.keys())},
         )
-        fig.update_yaxes(title="RX continent")
+       
+        fig.update_layout(
+            hovermode="x unified",
+            title=f"Reference: {self.reference} - % RBN spots per band and continent"
+        )
+        fig.update_yaxes(title="% spots")
 
         if not save:
             return fig

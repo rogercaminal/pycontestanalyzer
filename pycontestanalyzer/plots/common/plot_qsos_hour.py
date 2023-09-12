@@ -7,6 +7,7 @@ import plotly.offline as pyo
 from pandas import DataFrame
 
 from pycontestanalyzer.plots.plot_base import PlotBase
+from pycontestanalyzer.utils.calculations import custom_floor
 from pycontestanalyzer.utils import CONTINENTS
 
 
@@ -19,6 +20,7 @@ class PlotQsosHour(PlotBase):
         mode: str,
         callsigns_years: list[tuple],
         continents: list[str] | None = None,
+        time_bin_size: int = 60,
     ):
         """Init method of the PlotQsosHour class.
 
@@ -28,9 +30,12 @@ class PlotQsosHour(PlotBase):
             callsigns_years (list[tuple]): Callsign and year of the contest
             continents (list[str] | None): List of continents to filter out. Defaults
                 to None.
+            time_bin_size (int): size of the time bin in minutes. Defaults to 60.
         """
         super().__init__(contest=contest, mode=mode, callsigns_years=callsigns_years)
         self.continents: list[str] = continents or CONTINENTS
+        self.time_bin_size = time_bin_size
+
 
     def plot(self, save: bool = False) -> None | go.Figure:
         """Create plot.
@@ -43,7 +48,11 @@ class PlotQsosHour(PlotBase):
         """
         # Groupby data
         grp = (
-            self.data.assign(hour_rounded=lambda x: np.floor(x["hour"]))
+            self.data
+            .assign(
+                # hour_rounded=lambda x: np.floor(x["hour"])
+                hour_rounded=lambda x: custom_floor(x=x["hour"], precision=float(self.time_bin_size) / 60)
+            )
             .query(f"(continent.isin({self.continents}))")
             .groupby(
                 ["mycall", "year", "band", "band_id", "hour_rounded"], as_index=False
@@ -52,7 +61,7 @@ class PlotQsosHour(PlotBase):
         )
 
         grp = (
-            DataFrame(np.arange(0, 48, 1), columns=["hour_rounded"])
+            DataFrame(np.arange(0, 48, float(self.time_bin_size) / 60), columns=["hour_rounded"])
             .merge(
                 DataFrame(
                     grp[["mycall", "year"]].drop_duplicates(),
