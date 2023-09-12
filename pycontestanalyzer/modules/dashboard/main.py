@@ -20,7 +20,9 @@ from pycontestanalyzer.plots.cqww.plot_cqww_evolution import (
     AVAILABLE_FEATURES as AVAILABLE_FEATURES_CQWW,
     PlotCqWwEvolution,
 )
-from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import PlotMinutesPreviousCall
+from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import (
+    PlotMinutesPreviousCall,
+)
 from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
 from pycontestanalyzer.plots.rbn.plot_number_rbn_spots import PlotNumberRbnSpots
@@ -248,9 +250,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                             inline=True,
                         ),
                     ),
-                    html.Div(
-                        dcc.Graph(id="minutes_previous_call", figure=go.Figure())
-                    ),
+                    html.Div(dcc.Graph(id="minutes_previous_call", figure=go.Figure())),
                 ]
             ),
         ]
@@ -294,9 +294,9 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
     @app.callback(
         Output("qsos_hour", "figure"),
         [
-            Input("submit-button", "n_clicks"), 
+            Input("submit-button", "n_clicks"),
             Input("cl_qsos_hour_continent", "value"),
-            Input("rb_qsos_hour_time_bin", "value")
+            Input("rb_qsos_hour_time_bin", "value"),
         ],
         [
             State("contest", "value"),
@@ -304,7 +304,9 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             State("callsigns_years", "value"),
         ],
     )
-    def plot_qsos_hour(n_clicks, continents, time_bin_size, contest, mode, callsigns_years):
+    def plot_qsos_hour(
+        n_clicks, continents, time_bin_size, contest, mode, callsigns_years
+    ):
         f_callsigns_years = []
         if n_clicks > 0:
             for callsign_year in callsigns_years:
@@ -318,7 +320,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                 mode=mode,
                 callsigns_years=f_callsigns_years,
                 continents=continents,
-                time_bin_size=time_bin_size
+                time_bin_size=time_bin_size,
             ).plot()
         return go.Figure()
 
@@ -509,7 +511,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         [
             Input("submit-button", "n_clicks"),
             Input("rb_contest_evolution_feature", "value"),
-            Input("rb_contest_evolution_time_bin", "value")
+            Input("rb_contest_evolution_time_bin", "value"),
         ],
         [
             State("contest", "value"),
@@ -530,17 +532,20 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     raise dash.exceptions.PreventUpdate
             if contest == "cqww":
                 return PlotCqWwEvolution(
-                    mode=mode, callsigns_years=f_callsigns_years, feature=feature, time_bin_size=time_bin_size
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    feature=feature,
+                    time_bin_size=time_bin_size,
                 ).plot()
             else:
                 raise ValueError("Contest not known")
         return go.Figure()
-    
+
     @app.callback(
         Output("minutes_previous_call", "figure"),
         [
             Input("submit-button", "n_clicks"),
-            Input("rb_previous_call_time_bin", "value")
+            Input("rb_previous_call_time_bin", "value"),
         ],
         [
             State("contest", "value"),
@@ -561,7 +566,9 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     raise dash.exceptions.PreventUpdate
             if contest == "cqww":
                 return PlotMinutesPreviousCall(
-                    mode=mode, callsigns_years=f_callsigns_years, time_bin_size=time_bin_size
+                    mode=mode,
+                    callsigns_years=f_callsigns_years,
+                    time_bin_size=time_bin_size,
                 ).plot()
             else:
                 raise ValueError("Contest not known")

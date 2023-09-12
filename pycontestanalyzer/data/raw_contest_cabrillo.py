@@ -15,7 +15,10 @@ class RawContestCabrilloDataSource(StorageDataSource):
     """Contest cabrillo data source definition."""
 
     file_format: ClassVar[str] = "csv"
-    storage_options = {"header": None, "dtype": defaultdict(lambda: str)}
+    storage_options: ClassVar[dict] = {
+        "header": None,
+        "dtype": defaultdict(lambda: str),
+    }
     path: ClassVar[Union[str, PathLike]]
     prefix: Optional[str]
     website_address_template: str

@@ -7,8 +7,8 @@ import plotly.offline as pyo
 from pandas import DataFrame
 
 from pycontestanalyzer.plots.plot_base import PlotBase
-from pycontestanalyzer.utils.calculations import custom_floor
 from pycontestanalyzer.utils import CONTINENTS
+from pycontestanalyzer.utils.calculations import custom_floor
 
 
 class PlotQsosHour(PlotBase):
@@ -36,7 +36,6 @@ class PlotQsosHour(PlotBase):
         self.continents: list[str] = continents or CONTINENTS
         self.time_bin_size = time_bin_size
 
-
     def plot(self, save: bool = False) -> None | go.Figure:
         """Create plot.
 
@@ -48,10 +47,11 @@ class PlotQsosHour(PlotBase):
         """
         # Groupby data
         grp = (
-            self.data
-            .assign(
+            self.data.assign(
                 # hour_rounded=lambda x: np.floor(x["hour"])
-                hour_rounded=lambda x: custom_floor(x=x["hour"], precision=float(self.time_bin_size) / 60)
+                hour_rounded=lambda x: custom_floor(
+                    x=x["hour"], precision=float(self.time_bin_size) / 60
+                )
             )
             .query(f"(continent.isin({self.continents}))")
             .groupby(
@@ -61,7 +61,10 @@ class PlotQsosHour(PlotBase):
         )
 
         grp = (
-            DataFrame(np.arange(0, 48, float(self.time_bin_size) / 60), columns=["hour_rounded"])
+            DataFrame(
+                np.arange(0, 48, float(self.time_bin_size) / 60),
+                columns=["hour_rounded"],
+            )
             .merge(
                 DataFrame(
                     grp[["mycall", "year"]].drop_duplicates(),

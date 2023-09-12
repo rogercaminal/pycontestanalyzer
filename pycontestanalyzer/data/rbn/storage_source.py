@@ -19,7 +19,7 @@ class ReverseBeaconRawDataSource(StorageDataSource):
 
     path: ClassVar[Union[str, PathLike]] = "{date}.zip"
     prefix: Optional[str] = "https://data.reversebeacon.net/rbn_history/"
-    dtypes: dict[str, str] = {
+    dtypes: ClassVar[dict[str, str]] = {
         "callsign": "str",
         "freq": "float",
         "band": "int",

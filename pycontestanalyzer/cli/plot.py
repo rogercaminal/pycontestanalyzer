@@ -8,8 +8,10 @@ from pycontestanalyzer.plots.common.plot_qso_direction import PlotQsoDirection
 from pycontestanalyzer.plots.common.plot_qsos_hour import PlotQsosHour
 from pycontestanalyzer.plots.common.plot_rate import PlotRate
 from pycontestanalyzer.plots.common.plot_rolling_rate import PlotRollingRate
-from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import PlotMinutesPreviousCall
 from pycontestanalyzer.plots.cqww.plot_cqww_evolution import PlotCqWwEvolution
+from pycontestanalyzer.plots.cqww.plot_minutes_from_previous_call import (
+    PlotMinutesPreviousCall,
+)
 from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
 from pycontestanalyzer.plots.rbn.plot_number_rbn_spots import PlotNumberRbnSpots
@@ -36,6 +38,7 @@ def frequency(
         ),
     ),
 ):
+    """Frequency plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotFrequency(contest=contest, mode=mode, callsigns_years=callsigns_years)
     plot.plot(save=True)
@@ -63,6 +66,7 @@ def qso_direction(
         help=("Range of contest hours to consider. Defaults to [0, 23]"),
     ),
 ):
+    """QSO direction plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotQsoDirection(
         contest=contest,
@@ -90,6 +94,7 @@ def qsos_hour(
         ),
     ),
 ):
+    """QSO's per hour plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotQsosHour(contest=contest, mode=mode, callsigns_years=callsigns_years)
     plot.plot(save=True)
@@ -112,6 +117,7 @@ def rate(
         ),
     ),
 ):
+    """QSO rate plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotRate(
         contest=contest,
@@ -139,6 +145,7 @@ def rolling_rate(
         ),
     ),
 ):
+    """QSO rolling rate plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotRollingRate(
         contest=contest,
@@ -170,6 +177,7 @@ def cqww_evolution(
         help=("Feature to plot"),
     ),
 ):
+    """CQ WW feature evolution plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotCqWwEvolution(
         mode=mode, callsigns_years=callsigns_years, feature=feature
@@ -198,6 +206,7 @@ def cqww_minutes_from_previous_call(
         help=("Size of the time bins, default: 15"),
     ),
 ):
+    """Minutes since each callsign called previously plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotMinutesPreviousCall(
         mode=mode, callsigns_years=callsigns_years, time_bin_size=time_bin_size
@@ -237,6 +246,7 @@ def band_conditions(
         help=("Continents to plot"),
     ),
 ):
+    """Band conditions from RBN plot."""
     years = [pair.split(",")[1] for pair in callsigns_years]
     plot = PlotBandConditions(
         contest=contest,
@@ -271,6 +281,7 @@ def cw_speed(
         help=("Size of the time bins, default: 60"),
     ),
 ):
+    """CW speed plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotCwSpeed(
         contest=contest,
@@ -308,6 +319,7 @@ def number_rbn_spots(
         help=("Continents to consider for RX"),
     ),
 ):
+    """Number of RBN spots plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotNumberRbnSpots(
         contest=contest,
@@ -346,6 +358,7 @@ def snr(
         help=("Continents to consider for RX"),
     ),
 ):
+    """Average SNR plot."""
     callsigns_years = [pair.split(",") for pair in callsigns_years]
     plot = PlotSnr(
         contest=contest,

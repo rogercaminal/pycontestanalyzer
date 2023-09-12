@@ -6,8 +6,6 @@ import plotly.offline as pyo
 from pandas import concat
 
 from pycontestanalyzer.plots.plot_base import PlotBase
-from pycontestanalyzer.utils import BANDMAP
-
 
 CONTEST_MINUTES = 48 * 60
 
@@ -15,12 +13,7 @@ CONTEST_MINUTES = 48 * 60
 class PlotMinutesPreviousCall(PlotBase):
     """Plot Minutes from previous call histogram."""
 
-    def __init__(
-        self,
-        mode: str,
-        callsigns_years: list[tuple],
-        time_bin_size: int = 5
-    ):
+    def __init__(self, mode: str, callsigns_years: list[tuple], time_bin_size: int = 5):
         """Init method of the PlotCqWwScore class.
 
         Args:
@@ -52,11 +45,8 @@ class PlotMinutesPreviousCall(PlotBase):
         _data = concat(_data)
 
         # Dummy datetime to compare + time aggregation
-        _data = (
-            _data
-            .assign(
-                callsign_year=lambda x: x["mycall"] + "(" + x["year"].astype(str) + ")",
-            )
+        _data = _data.assign(
+            callsign_year=lambda x: x["mycall"] + "(" + x["year"].astype(str) + ")",
         )
 
         _data_filtered = _data.query("~(minutes_from_previous_call.isnull())")
@@ -67,17 +57,19 @@ class PlotMinutesPreviousCall(PlotBase):
             facet_row="callsign_year",
             labels={
                 "callsign_year": "Callsign (year)",
-                "minutes_from_previous_call": "Less than X minutes since last QSO from each callsign"
+                "minutes_from_previous_call": "Less than X minutes since last QSO from each callsign",
             },
             range_x=[0, 30],
             range_y=[0, 30],
             nbins=self.nbins,
-            category_orders={"band_transition_from_previous_call": sorted(_data_filtered["band_transition_from_previous_call"].unique())},
+            category_orders={
+                "band_transition_from_previous_call": sorted(
+                    _data_filtered["band_transition_from_previous_call"].unique()
+                )
+            },
             cumulative=True,
         )
 
         if not save:
             return fig
-        pyo.plot(
-            fig, filename="cqww_minutes_from_previous_call.html"
-        )
+        pyo.plot(fig, filename="cqww_minutes_from_previous_call.html")

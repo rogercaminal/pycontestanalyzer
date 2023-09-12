@@ -1,9 +1,9 @@
 """Plot QSO rate."""
 
-from numpy import where
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
+from numpy import where
 from pandas import Grouper
 from plotly.subplots import make_subplots
 
@@ -49,10 +49,15 @@ class PlotBandConditions(PlotReverseBeaconBase):
         """
         bands = list(BANDMAP.keys())
         grp = (
-            self.data
-            .query(f"(dx_cont == '{self.reference}') | (de_cont == '{self.reference}')")
+            self.data.query(
+                f"(dx_cont == '{self.reference}') | (de_cont == '{self.reference}')"
+            )
             .query(f"band.isin({bands})")
-            .assign(continent=lambda x: where(x["dx_cont"] == self.reference, x["de_cont"], x["dx_cont"]))
+            .assign(
+                continent=lambda x: where(
+                    x["dx_cont"] == self.reference, x["de_cont"], x["dx_cont"]
+                )
+            )
             .query(f"continent.isin({self.continents})")
             .groupby(
                 [
@@ -66,9 +71,11 @@ class PlotBandConditions(PlotReverseBeaconBase):
             .agg(numerator=("freq", "count"))
             .assign(
                 denominator=lambda x: (
-                    x.groupby(["band", "continent", "year"])["numerator"].transform("sum")
+                    x.groupby(["band", "continent", "year"])["numerator"].transform(
+                        "sum"
+                    )
                 ),
-                percent=lambda x: 100.* x["numerator"] / x["denominator"],
+                percent=lambda x: 100.0 * x["numerator"] / x["denominator"],
             )
         )
 
@@ -87,14 +94,14 @@ class PlotBandConditions(PlotReverseBeaconBase):
                 "continent": "Continent",
                 "datetime": "Time",
                 "band": "Band",
-                "percent": "% spots"
+                "percent": "% spots",
             },
             category_orders={"band": list(BANDMAP.keys())},
         )
-       
+
         fig.update_layout(
             hovermode="x unified",
-            title=f"Reference: {self.reference} - % RBN spots per band and continent"
+            title=f"Reference: {self.reference} - % RBN spots per band and continent",
         )
         fig.update_yaxes(title="% spots")
 

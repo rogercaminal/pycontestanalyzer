@@ -3,7 +3,7 @@
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
-from pandas import concat, to_datetime, to_timedelta, Grouper
+from pandas import Grouper, concat, to_datetime, to_timedelta
 
 from pycontestanalyzer.commons.pandas.general import hour_of_contest
 from pycontestanalyzer.plots.plot_base import PlotBase
@@ -16,9 +16,16 @@ AVAILABLE_FEATURES = {
     "zones": ["cum_zone", "Zone multipliers", "last"],
     "score": ["cum_contest_score", "Contest score", "last"],
     "points_per_qso": ["cum_points_per_qso", "Cumulative points per QSO", "mean"],
-    "diff_contest_score": ["diff_contest_score", "Contest points difference "
-                           "wrt previous QSO", "mean"],
-    "mult_worth_points": ["mult_worth_points", "# points equivalent to multiplier", "mean"],
+    "diff_contest_score": [
+        "diff_contest_score",
+        "Contest points difference " "wrt previous QSO",
+        "mean",
+    ],
+    "mult_worth_points": [
+        "mult_worth_points",
+        "# points equivalent to multiplier",
+        "mean",
+    ],
     "mult_worth_qsos": ["mult_worth_qsos", "# QSOs equivalent to multiplier", "mean"],
 }
 
@@ -31,7 +38,7 @@ class PlotCqWwEvolution(PlotBase):
         mode: str,
         callsigns_years: list[tuple],
         feature: str,
-        time_bin_size: int = 1
+        time_bin_size: int = 1,
     ):
         """Init method of the PlotCqWwScore class.
 
@@ -68,8 +75,7 @@ class PlotCqWwEvolution(PlotBase):
 
         # Dummy datetime to compare + time aggregation
         _data = (
-            _data
-            .pipe(
+            _data.pipe(
                 func=hour_of_contest,
             )
             .assign(
@@ -80,12 +86,17 @@ class PlotCqWwEvolution(PlotBase):
             .groupby(
                 [
                     "callsign_year",
-                    Grouper(key="dummy_datetime", freq=f"{self.time_bin_size}Min")
+                    Grouper(key="dummy_datetime", freq=f"{self.time_bin_size}Min"),
                 ],
                 as_index=False,
             )
             .aggregate(
-                **{AVAILABLE_FEATURES[self.feature][0]: (AVAILABLE_FEATURES[self.feature][0], AVAILABLE_FEATURES[self.feature][2])}
+                **{
+                    AVAILABLE_FEATURES[self.feature][0]: (
+                        AVAILABLE_FEATURES[self.feature][0],
+                        AVAILABLE_FEATURES[self.feature][2],
+                    )
+                }
             )
         )
 

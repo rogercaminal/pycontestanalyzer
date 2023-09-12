@@ -12,7 +12,7 @@ class RawCQWPXCabrilloDataSource(RawContestCabrilloDataSource):
 
     path: ClassVar[Union[str, PathLike]] = "{year}{mode}/{callsign}.log"
     prefix: Optional[str] = "http://www.cqwpx.com/publiclogs/"
-    dtypes: dict[str, str] = {
+    dtypes: ClassVar[dict[str, str]] = {
         "frequency": "int",
         "mode": "str",
         "date": "str",
