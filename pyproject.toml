@@ -1,0 +1,69 @@
+[tool.black]
+line-length = 88
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.pylint.BASIC]
+
+max-args = 10
+docstring-min-length = 3
+
+# R0801: Similar lines in 2 files - this is a framework for multiple pipelines, so we find a lot of similarities
+# W1203: logging-fstring-interpolation - f-string brings better readability and unifies style
+# W0511: We allow for TODOs in the code
+# W0707: raise-missing-from - the exceptions are being raised close to the definition. This only adds unnecessary verbosity
+disable = ["R0801", "W1203", "W0511", "W0707", "C0301"]
+
+good-names = ["by", "df", "i", "n", "dag_id", "X", "y"]
+
+# Specify PYTHONPATH for Pylint
+init-hook = 'import sys; sys.path.append(".")'
+
+# Known Pydantic errors ignore
+extension-pkg-allow-list = "pydantic"
+
+[tool.pylint.FORMAT]
+# Adding more length than black as autoformatting leaves imports without line breaks, which
+# triggers C0301 on pylint
+max-line-length = 140
+
+# Specify PYTHONPATH for Pytest
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+select = ["C90", "D", "E", "F", "I", "N", "PD", "PL", "RUF", "W"]
+ignore = ["C901", "D104", "D107"]
+
+per-file-ignores = { "tests/*" = ["D", "PLR0913", "PLR2004"] }
+
+line-length = 88
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+target-version = "py310"
+
+[tool.ruff.isort]
+combine-as-imports = true
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.pylint]
+max-args = 10

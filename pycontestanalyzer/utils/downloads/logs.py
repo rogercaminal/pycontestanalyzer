@@ -1,70 +1,94 @@
-import logging
+"""Utils file regarding cabrillo logs."""
+
+import os
+import re
 from urllib.request import urlopen
-#from urllib2 import urlopen
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+
+from pandas import DataFrame, concat, read_parquet
+
+from pycontestanalyzer.config import get_settings
+from pycontestanalyzer.data.cqww.storage_source import RawCQWWCabrilloDataSource
 
 
-def get_log(contest, callsign, year, mode):
-    isgood = False
-    try:
-        response = None
-        website_address = ""
-        if contest == "cqww":
-            logging.info('Getting the log from http://www.cqww.com/publiclogs/{}{}/{}.log'.format(year, mode, callsign.lower()))
-            website_address = "http://www.cqww.com/publiclogs/{}{}/{}.log".format(year, mode, callsign.lower())
-        elif contest == "cqwpx":
-            logging.info('Getting the log from http://www.cqwpx.com/publiclogs/{}{}/{}.log'.format(year, mode, callsign.lower()))
-            website_address = "http://www.cqwpx.com/publiclogs/{}{}/{}.log".format(year, mode, callsign.lower())
-
-        with urlopen(website_address) as response:
-            html = response.read()
-        isgood = True
-        return isgood, html
-    except:
-        return isgood, str("")
-
-
-def get_list_of_logs(contest_type, year, mode):
-    website_address = ""
-    if contest_type == "cqww":
-        website_address = "http://www.cqww.com/publiclogs/{}{}/".format(year, mode)
-    elif contest_type == "cqwpx":
-        website_address = "http://www.cqwpx.com/publiclogs/{}{}/".format(year, mode, )
-
+def _download_raw_data(website_address):
     with urlopen(website_address) as response:
-        html = str(response.read().decode('utf-8'))
-
-    html = html[html.find("Number of logs found"):]
-    calls = []
-    for l in html.split("<"):
-        if "a href=" in l:
-            calls.append(l.split(">")[-1])
-    del calls[calls.index("World Wide Radio Operators Foundation")]
-
-    calls.sort()
-    return calls
+        html = response.read().decode("unicode_escape")
+    return html
 
 
-def get_list_of_years(contest_type):
-    try:
-        website_address = ""
-        if contest_type == "cqww":
-            website_address = "http://www.cqww.com/publiclogs/"
-        elif contest_type == "cqwpx":
-            website_address = "http://www.cqwpx.com/publiclogs/"
+def _get_available_callsigns(
+    contest: str, year: int, mode: str | None = None
+) -> list[str]:
+    """Retrieve list of callsigns for a contest, year and mode.
 
-        with urlopen(website_address) as response:
-            html = response.read().decode('utf-8')
+    Args:
+        contest (str): Name of the contest
+        year (int): Year of the contest
+        mode (str): Mode of the contest. Defaults to None.
 
-        years = []
-        for l in html.split("\n"):
-            if "View CQ W" in l:
-                year = l.split()[5]
-                if year not in years:
-                    years.append(year)
+    Raises:
+        NotImplementedError: If contest is not available.
 
-        years.sort()
-        return years
-    except:
-        return ["2016"]
+    Returns:
+        list[str]: List of callsigns available
+    """
+    if contest == "cqww":
+        mode_adapted = mode.lower().replace("ssb", "ph")
+        website_address = f"{RawCQWWCabrilloDataSource.prefix}{year}{mode_adapted}"
+        html = _download_raw_data(website_address=website_address)
+        raw_list = re.findall(r"href='(.+)\.log'", html)
+    else:
+        raise NotImplementedError(f"Contest {contest} is not implemented.")
+    return [call.upper().replace("-", "/") for call in raw_list]
+
+
+def _get_available_year_modes(contest: str) -> dict[str, int]:
+    """Retrieve available year and modes from the contest website.
+
+    Args:
+        contest (str): Name of the contest
+
+    Raises:
+        NotImplementedError: If contest not implemented
+
+    Returns:
+        dict[str, int]: Dictionary of contest and years available.
+    """
+    if contest == "cqww":
+        website_address = f"{RawCQWWCabrilloDataSource.prefix}"
+        html = _download_raw_data(website_address=website_address)
+        raw_list = re.findall(r"href=\"(\w+)/\"", html)
+    else:
+        raise NotImplementedError(f"Contest {contest} is not implemented.")
+    return [(item[4:].replace("ph", "ssb"), item[:4]) for item in raw_list]
+
+
+def get_all_options(contest: str) -> DataFrame:
+    """Retrieve all contest/year/mode/callsigns from the website.
+
+    To do that, it uses _get_available_callsigns and _get_available_year_modes
+    functions above to get all potential options from the contest website.
+
+    Args:
+        contest (str): _description_
+
+    Returns:
+        DataFrame: _description_
+    """
+    settings = get_settings()
+    options_path = os.path.join(
+        settings.storage.prefix, f"contest={contest}", "available_callsigns.parquet"
+    )
+    if not os.path.exists(options_path):
+        df_mode_year = DataFrame(
+            _get_available_year_modes(contest=contest), columns=["mode", "year"]
+        )
+        data = []
+        for mode, year in df_mode_year.to_numpy():
+            _df = DataFrame(
+                _get_available_callsigns(contest=contest, mode=mode, year=year),
+                columns=["callsign"],
+            ).assign(contest=contest, mode=mode, year=year)
+            data.append(_df)
+        data = concat(data).to_parquet(options_path)
+    return read_parquet(options_path)

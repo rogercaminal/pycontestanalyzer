@@ -4,31 +4,30 @@ from abc import ABC, abstractmethod
 from pandas import DataFrame, concat
 from plotly.graph_objects import Figure
 
-from pycontestanalyzer.data.processed_contest_source import ProcessedContestDataSource
+from pycontestanalyzer.data.processed_rbn_source import ProcessedReverseBeaconDataSource
 
 
-class PlotBase(ABC):
-    """Plot abstract base class.
+class PlotReverseBeaconBase(ABC):
+    """Plot RBN abstract base class.
 
     This abstract class serves as a base interface for the different plots,
     It mainly defines the `PlotBase.plot` method as the
     way to create a plotly object, implemented by each plot subclass.
     """
 
-    def __init__(self, contest: str, mode: str, callsigns_years: list[tuple]):
+    def __init__(self, contest: str, mode: str, years: list[int]):
         """Init method of the base class."""
         self.contest = contest
         self.mode = mode
-        self.callsigns_years = callsigns_years
+        self.years = years
         self.data = self._get_inputs()
 
     def _get_inputs(self) -> dict[str, DataFrame]:
         """Get downloaded inputs needed for the plot."""
         data = []
-        for callsign, year in self.callsigns_years:
+        for year in self.years:
             data_filtered = (
-                ProcessedContestDataSource(
-                    callsign=callsign.lower(),
+                ProcessedReverseBeaconDataSource(
                     contest=self.contest,
                     year=year,
                     mode=self.mode,
