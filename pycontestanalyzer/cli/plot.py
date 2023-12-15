@@ -16,6 +16,7 @@ from pycontestanalyzer.plots.rbn.plot_band_conditions import PlotBandConditions
 from pycontestanalyzer.plots.rbn.plot_cw_speed import PlotCwSpeed
 from pycontestanalyzer.plots.rbn.plot_number_rbn_spots import PlotNumberRbnSpots
 from pycontestanalyzer.plots.rbn.plot_snr import PlotSnr
+from pycontestanalyzer.plots.rbn.plot_snr_band_continent import PlotSnrBandContinent
 
 app = Typer(name="plot", add_completion=False)
 logger = getLogger(__name__)
@@ -364,6 +365,57 @@ def snr(
         contest=contest,
         mode=mode,
         callsigns_years=callsigns_years,
+        time_bin_size=time_bin_size,
+        rx_continents=rx_continents,
+    )
+    plot.plot(save=True)
+
+
+
+@app.command()
+def snr_band_continent(
+    contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),
+    mode: str = Option(
+        ...,
+        "--mode",
+        help="mode of the contest. Only available options: cw, " "ssb, rrty, mixed.",
+    ),
+    callsigns: list[str] = Option(
+        ...,
+        "--callsigns",
+        help=(
+            "callsigns to be considered. Can be specified multiple times for "
+            "multiple callsigns."
+        ),
+    ),
+    bands: list[str] = Option(
+        [10, 15, 20, 40, 80, 160],
+        "--bands",
+        help=("Bands to consider"),
+    ),
+    year: int = Option(
+        ...,
+        "--year",
+        help=("Year of the contest"),
+    ),
+    time_bin_size: int = Option(
+        10,
+        "--time_bin_size",
+        help=("Size of the time bins, default: 60"),
+    ),
+    rx_continents: list[str] = Option(
+        ["EU", "NA", "AS", "SA", "OC"],
+        "--rx_continents",
+        help=("Continents to consider for RX"),
+    ),
+):
+    """Average SNR plot per band and continent."""
+    plot = PlotSnrBandContinent(
+        contest=contest,
+        mode=mode,
+        callsigns=callsigns,
+        bands=bands,
+        year=year,
         time_bin_size=time_bin_size,
         rx_continents=rx_continents,
     )

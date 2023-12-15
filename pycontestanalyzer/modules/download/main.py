@@ -50,27 +50,15 @@ def exists_rbn(contest: str, year: int, mode: str) -> bool:
     return os.path.exists(path=path)
 
 
-def main(
-    contest: str, years: list[int], callsigns: list[str], mode: str, force: bool = False
-) -> None:
-    """Main download & data engineering entrypoint.
-
-    This method performs the main workflow in order to download the cabrillo file(s)
-    from the given website, and implement the set of features that then will be used
-    in the plotting step. The resulting data set is stored locally in the path
-    specified in the settings.
-
-    Args:
-        contest (str): string with the name of the contest (case insensitive).
-        years (list[int]): list of integers with the years to consider.
-        callsigns (list[str]): list of (case insensitive) strings containing the
-            callsigns to consider.
-        mode (str): mode of the contest.
-        force (bool, optional): force download even if it exists. Defaults to False.
-    """
-    settings = get_settings()
-
+def download_contest_data(
+        callsigns: list[str], 
+        years: list[int], 
+        contest: str, 
+        mode: str, 
+        force: bool = False
+    ):
     logger.info("Downloading data from the server")
+    settings = get_settings()
     for callsign in callsigns:
         for year in years:
             if (
@@ -107,7 +95,11 @@ def main(
                     f"\t- {contest} - {mode} - {year} - {callsign} already exists!"
                 )
 
+
+
+def download_rbn_data(contest: str, years: list[int], mode: str):
     logger.info("Downloading RBN for the contest")
+    settings = get_settings()
     for year in years:
         if not exists_rbn(contest=contest, year=year, mode=mode):
             logger.info(f"  - RBN: {contest} - {mode} - {year}")
@@ -123,3 +115,30 @@ def main(
             RawReverseBeaconDataSink(prefix=prefix_raw_rbn_data).push(rbn_data)
         else:
             logger.info(f"\t- RBN for {contest} - {mode} - {year} already exists!")
+
+def main(
+    contest: str, years: list[int], callsigns: list[str], mode: str, force: bool = False
+) -> None:
+    """Main download & data engineering entrypoint.
+
+    This method performs the main workflow in order to download the cabrillo file(s)
+    from the given website, and implement the set of features that then will be used
+    in the plotting step. The resulting data set is stored locally in the path
+    specified in the settings.
+
+    Args:
+        contest (str): string with the name of the contest (case insensitive).
+        years (list[int]): list of integers with the years to consider.
+        callsigns (list[str]): list of (case insensitive) strings containing the
+            callsigns to consider.
+        mode (str): mode of the contest.
+        force (bool, optional): force download even if it exists. Defaults to False.
+    """
+    download_contest_data(
+        callsigns=callsigns, 
+        years=years, 
+        contest=contest, 
+        mode=mode, 
+        force=force
+    )
+    download_rbn_data(contest=contest, years=years, mode=mode)
