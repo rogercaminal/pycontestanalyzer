@@ -209,8 +209,25 @@ class PlotSnrBandContinent(PlotReverseBeaconBase):
             markers=True,
         )
 
-        fig.update_layout(hovermode="x unified")
-
+        fig.update_layout(
+            hovermode="x unified",
+            plot_bgcolor='white'
+        )
+        fig.update_xaxes(
+            mirror=True,
+            ticks='outside',
+            showline=True,
+            linecolor='black',
+            gridcolor='lightgrey'
+        )
+        fig.update_yaxes(
+            mirror=True,
+            ticks='outside',
+            showline=True,
+            linecolor='black',
+            gridcolor='lightgrey'
+        )
+        
         if not save:
             return fig
         pyo.plot(fig, filename="cw_snr_band_continent.html")

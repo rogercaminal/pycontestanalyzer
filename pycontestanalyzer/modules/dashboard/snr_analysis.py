@@ -2,7 +2,7 @@
 import dash
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from dash import dcc, html, callback_context
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 from pycontestanalyzer.modules.download.main import (
@@ -11,8 +11,6 @@ from pycontestanalyzer.modules.download.main import (
 )
 from pycontestanalyzer.plots.rbn.plot_snr_band_continent import PlotSnrBandContinent
 from pycontestanalyzer.utils import CONTINENTS
-
-YEAR_MIN = 2020
 
 
 def main(debug: bool = False) -> None:  # noqa: PLR0915
@@ -40,7 +38,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
                     {"label": "CQ WPX", "value": "cqwpx"},
                     {"label": "IARU", "value": "iaru"},
                 ],
-                value=None,
+                value="cqww",
             )
         ],
         style={"width": "25%", "display": "inline-block"},
@@ -93,35 +91,16 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         ),
         style={"width": "25%", "display": "inline-block"},
     )
-
-    app.layout = html.Div(
-        [
-            radio_contest,
-            input_year,
-            input_call,
-            dropdown_bands,
-            dropdown_time_bin_size,
-            dropdown_continents,
-            html.Div(
-                html.Button(
-                    id="submit-button",
-                    n_clicks=0,
-                    children="submit",
-                    style={"fontsize": 24},
-                )
-            ),
-            html.Div(
-                dcc.Graph(
-                    id="snr_plot", 
-                    figure=go.Figure(), 
-                    responsive=True,
-                    style={"flex": 1, "min-width": 700}
-                )
-            ),
-            dcc.Store(id="signal"),
-        ]
+    submit_button = html.Div(
+        html.Button(
+            id="submit-button",
+            n_clicks=0,
+            children="submit",
+            style={"fontsize": 24},
+        )
     )
 
+    # Download step
     @app.callback(
         Output("signal", "data"),
         [Input("submit-button", "n_clicks")],
@@ -138,6 +117,16 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         return True
     
 
+    # SNR plot
+    graph_snr = html.Div(
+        dcc.Graph(
+            id="snr_plot", 
+            figure=go.Figure(), 
+            responsive=True,
+            style={"flex": 1, "min-width": 700}
+        ),
+        style={"width": "95%"}
+    )
     @app.callback(
         Output("snr_plot", "figure"),
         [Input("signal", "data")],
@@ -164,4 +153,20 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             rx_continents=rx_continents
         ).plot()
     
+    # Construct layout of the dashboard using components defined above
+    app.layout = html.Div(
+        [
+            dcc.Store(id="signal"),
+            radio_contest,
+            input_year,
+            input_call,
+            dropdown_bands,
+            dropdown_time_bin_size,
+            dropdown_continents,
+            submit_button,
+            graph_snr,
+        ]
+    )
+
+    # Run the dashboard
     app.run(debug=debug, host="0.0.0.0", port=8050)
