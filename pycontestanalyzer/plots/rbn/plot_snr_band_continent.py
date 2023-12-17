@@ -75,13 +75,13 @@ class PlotSnrBandContinent(PlotReverseBeaconBase):
                 if i == 0:
                     common_callsigns = set(
                         df_temp.query(f"dx == '{call}'")["unique_callsign"]
-                        .to_numpy[0]
+                        .to_numpy()[0]
                         .tolist()
                     )
                 else:
                     common_callsigns &= set(
                         df_temp.query(f"dx == '{call}'")["unique_callsign"]
-                        .to_numpy[0]
+                        .to_numpy()[0]
                         .tolist()
                     )
             df_grp = df_grp.query(f"callsign.isin({list(common_callsigns)})")
