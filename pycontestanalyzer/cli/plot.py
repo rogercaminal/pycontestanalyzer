@@ -371,7 +371,6 @@ def snr(
     plot.plot(save=True)
 
 
-
 @app.command()
 def snr_band_continent(
     contest: str = Option(..., "--contest", help="Name of the contest, e.g. cqww."),

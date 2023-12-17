@@ -51,12 +51,17 @@ def exists_rbn(contest: str, year: int, mode: str) -> bool:
 
 
 def download_contest_data(
-        callsigns: list[str], 
-        years: list[int], 
-        contest: str, 
-        mode: str, 
-        force: bool = False
-    ):
+    callsigns: list[str], years: list[int], contest: str, mode: str, force: bool = False
+):
+    """Download contest data from contest website.
+
+    Args:
+        callsigns (list[str]): List of callsigns to consider, in capital letters
+        years (list[int]): List of years to consider
+        contest (str): Name of the contest
+        mode (str): Mode of the contest
+        force (bool, optional): Force download even if it exists. Defaults to False.
+    """
     logger.info("Downloading data from the server")
     settings = get_settings()
     for callsign in callsigns:
@@ -96,8 +101,14 @@ def download_contest_data(
                 )
 
 
+def download_rbn_data(contest: str, years: list[int], mode: str = "cw"):
+    """Download RBN data.
 
-def download_rbn_data(contest: str, years: list[int], mode: str):
+    Args:
+        contest (str): Name of the contest
+        years (list[int]): Years of the contests
+        mode (str): Mode of the contest. Defaults to "cw".
+    """
     logger.info("Downloading RBN for the contest")
     settings = get_settings()
     for year in years:
@@ -115,6 +126,7 @@ def download_rbn_data(contest: str, years: list[int], mode: str):
             RawReverseBeaconDataSink(prefix=prefix_raw_rbn_data).push(rbn_data)
         else:
             logger.info(f"\t- RBN for {contest} - {mode} - {year} already exists!")
+
 
 def main(
     contest: str, years: list[int], callsigns: list[str], mode: str, force: bool = False
@@ -135,10 +147,6 @@ def main(
         force (bool, optional): force download even if it exists. Defaults to False.
     """
     download_contest_data(
-        callsigns=callsigns, 
-        years=years, 
-        contest=contest, 
-        mode=mode, 
-        force=force
+        callsigns=callsigns, years=years, contest=contest, mode=mode, force=force
     )
     download_rbn_data(contest=contest, years=years, mode=mode)

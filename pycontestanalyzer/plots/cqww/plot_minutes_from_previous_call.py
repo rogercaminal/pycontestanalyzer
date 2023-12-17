@@ -57,7 +57,8 @@ class PlotMinutesPreviousCall(PlotBase):
             facet_row="callsign_year",
             labels={
                 "callsign_year": "Callsign (year)",
-                "minutes_from_previous_call": "Less than X minutes since last QSO from each callsign",
+                "minutes_from_previous_call": "Less than X minutes since last QSO from "
+                "each callsign",
             },
             range_x=[0, 30],
             range_y=[0, 30],

@@ -6,14 +6,14 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 from pycontestanalyzer.modules.download.main import (
-    exists_rbn,
     download_rbn_data,
+    exists_rbn,
 )
 from pycontestanalyzer.plots.rbn.plot_snr_band_continent import PlotSnrBandContinent
 from pycontestanalyzer.utils import CONTINENTS
 
 
-def main(debug: bool = False) -> None:  # noqa: PLR0915
+def main(debug: bool = False) -> None:
     """Main dashboard entrypoint.
 
     This method generates the dashboard to be displayed with the analysis of each
@@ -23,9 +23,9 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
         debug: boolean with the debug option of dash
     """
     app = dash.Dash(
-        __name__, 
-        external_stylesheets=[dbc.themes.BOOTSTRAP], 
-        prevent_initial_callbacks=True
+        __name__,
+        external_stylesheets=[dbc.themes.BOOTSTRAP],
+        prevent_initial_callbacks=True,
     )
 
     # Buttons
@@ -59,7 +59,7 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             id="callsigns",
             placeholder="Enter a comma-separated list of calls...",
             type="text",
-            value='',
+            value="",
         ),
         style={"width": "25%", "display": "inline-block"},
     )
@@ -112,21 +112,20 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
     def run_download(n_clicks, contest, year):
         if n_clicks > 0:
             if not exists_rbn(contest=contest, year=year, mode="cw"):
-                pass
                 download_rbn_data(contest=contest, years=[year], mode="cw")
         return True
-    
 
     # SNR plot
     graph_snr = html.Div(
         dcc.Graph(
-            id="snr_plot", 
-            figure=go.Figure(), 
+            id="snr_plot",
+            figure=go.Figure(),
             responsive=True,
-            style={"flex": 1, "min-width": 700}
+            style={"flex": 1, "min-width": 700},
         ),
-        style={"width": "95%"}
+        style={"width": "95%"},
     )
+
     @app.callback(
         Output("snr_plot", "figure"),
         [Input("signal", "data")],
@@ -144,15 +143,15 @@ def main(debug: bool = False) -> None:  # noqa: PLR0915
             raise dash.exceptions.PreventUpdate
         calls = callsigns.strip().split(",")
         return PlotSnrBandContinent(
-            contest=contest, 
-            callsigns=calls, 
-            mode="cw", 
-            bands=bands, 
-            year=int(year), 
-            time_bin_size=time_bin_size, 
-            rx_continents=rx_continents
+            contest=contest,
+            callsigns=calls,
+            mode="cw",
+            bands=bands,
+            year=int(year),
+            time_bin_size=time_bin_size,
+            rx_continents=rx_continents,
         ).plot()
-    
+
     # Construct layout of the dashboard using components defined above
     app.layout = html.Div(
         [
